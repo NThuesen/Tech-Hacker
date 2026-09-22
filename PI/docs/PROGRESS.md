@@ -109,5 +109,5 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Entregue: resolução pura de associação C2 direta/descendente, proveniência e cadeia PPID em evidência; cenário listener com filho e README/ARCHITECTURE/DEMO/TECHNICAL_REPORT atualizados.
 - Validação: 139 testes passam em Python 3.13.12; direto, filho, neto, não relacionado, dados ausentes, self-parent e ciclo cobertos; CLI end-to-end texto/JSON e offline sem coleta; import/--help e scan local → snapshot temporário → analyze com JSON idêntico; git diff --check sem erros.
 - Decisões: todas as units alcançadas preservadas; descendência exige processos observados até o MainPID; C1, collectors, dependências e schema v1 preservados.
-- Limitações/pendências: PPID é contexto, não membership autoritativo; snapshot não atômico, cgroups/socket activation/namespaces fora do escopo; revisão, diagramação final do documento e apresentação continuam com o grupo.
+- Limitações/pendências: PPID é contexto, não membership autoritativo; snapshot não atômico, cgroups/socket activation/namespaces fora do escopo; documento técnico final de quatro páginas versionado; apresentação continua com o grupo.
 - Próximo bloco: NONE — escopo aprovado encerrado; nenhuma nova extensão iniciada.
