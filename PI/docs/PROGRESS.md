@@ -4,7 +4,7 @@
 
 `CURRENT_BLOCK: B7`
 
-Status geral: **B0-B6 concluídos e validados; B7 opcional, não iniciado**.
+Status geral: **B0-B6 concluídos e validados; B7 aprovado e pronto para implementação, ainda não iniciado**.
 
 ## Regras de atualização
 
@@ -13,7 +13,7 @@ Ao terminar um bloco:
 1. altere `CURRENT_BLOCK` para o próximo bloco;
 2. atualize o status do bloco concluído;
 3. acrescente uma entrada curta no histórico;
-4. não implemente o próximo bloco na mesma tarefa sem pedido explícito.
+4. não implemente o próximo bloco na mesma tarefa sem pedido explícito; se o bloco concluído for o último aprovado, defina `CURRENT_BLOCK: NONE`.
 
 Não transforme este arquivo em diário detalhado. O objetivo é permitir handoff rápido entre sessões/agentes.
 
@@ -28,7 +28,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B4 | DONE | C1/C2/C3 e findings rastreáveis; suíte com 109 testes passa |
 | B5 | DONE | CLI live/offline e relatórios; suíte com 116 testes passa |
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
-| B7 | OPTIONAL | Extensões somente após B0-B6 |
+| B7 | READY | Robustecer C2 com associação direta por MainPID e indireta por ancestralidade PPID, sem novas fontes |
 
 ## Formato do resumo de conclusão
 
@@ -102,4 +102,4 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Validação: 124 testes passam em Python 3.13.12; quatro cenários em texto/JSON com resultados exatos, normal sem C1, inseguro com needs_review e parcial inconclusivo; offline testado sem coleta/comandos/sockets.
 - Decisões: demonstração sintética reproduzível após setup, sem criar incidente no host; coleta live como complemento; nenhum item de B7 adicionado.
 - Limitações/pendências: grupo deve revisar autoria, diagramar e conferir quatro páginas do documento técnico e realizar apresentação; limitações de coleta/análise documentadas no README.
-- Próximo bloco: B7 (opcional, não iniciado).
+- Próximo bloco: B7 — robustez da associação processo ↔ serviço por ancestralidade PPID (aprovado, não iniciado).
