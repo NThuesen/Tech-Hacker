@@ -2,7 +2,11 @@
 
 ## Fonte de verdade do projeto
 
-Este documento resume o enunciado da Avaliação Intermediária de Tecnologias Hackers (Prof. Rodolfo Avelino). Ele deve ser usado como referência funcional do projeto. Não invente requisitos acadêmicos além dos descritos aqui; propostas extras devem ser claramente tratadas como extensões.
+Este documento resume o enunciado da Avaliação Intermediária de Tecnologias Hackers (Prof. Rodolfo Avelino). Ele deve ser usado como referência funcional do projeto.
+
+**Este arquivo registra requisitos, não decisões de implementação.** A solução técnica aprovada está em `ARCHITECTURE.md`, a ordem de execução em `IMPLEMENTATION_PLAN.md` e o estado atual em `PROGRESS.md`.
+
+Não invente requisitos acadêmicos além dos descritos aqui; propostas extras devem ser claramente tratadas como extensões.
 
 ## Objetivo
 
