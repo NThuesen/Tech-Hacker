@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: B7`
+`CURRENT_BLOCK: NONE`
 
-Status geral: **B0-B6 concluídos e validados; B7 aprovado e pronto para implementação, ainda não iniciado**.
+Status geral: **Escopo planejado concluído: B0-B7 implementados e validados; nenhuma extensão adicional iniciada**.
 
 ## Regras de atualização
 
@@ -28,7 +28,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B4 | DONE | C1/C2/C3 e findings rastreáveis; suíte com 109 testes passa |
 | B5 | DONE | CLI live/offline e relatórios; suíte com 116 testes passa |
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
-| B7 | READY | Robustecer C2 com associação direta por MainPID e indireta por ancestralidade PPID, sem novas fontes |
+| B7 | DONE | C2 direta/descendente com proveniência e cadeia PPID, travessia segura e demo de filho; suíte com 139 testes passa |
 
 ## Formato do resumo de conclusão
 
@@ -103,3 +103,11 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Decisões: demonstração sintética reproduzível após setup, sem criar incidente no host; coleta live como complemento; nenhum item de B7 adicionado.
 - Limitações/pendências: grupo deve revisar autoria, diagramar e conferir quatro páginas do documento técnico e realizar apresentação; limitações de coleta/análise documentadas no README.
 - Próximo bloco: B7 — robustez da associação processo ↔ serviço por ancestralidade PPID (aprovado, não iniciado).
+
+### 2026-09-22 — B7 concluído
+
+- Entregue: resolução pura de associação C2 direta/descendente, proveniência e cadeia PPID em evidência; cenário listener com filho e README/ARCHITECTURE/DEMO/TECHNICAL_REPORT atualizados.
+- Validação: 139 testes passam em Python 3.13.12; direto, filho, neto, não relacionado, dados ausentes, self-parent e ciclo cobertos; CLI end-to-end texto/JSON e offline sem coleta; import/--help e scan local → snapshot temporário → analyze com JSON idêntico; git diff --check sem erros.
+- Decisões: todas as units alcançadas preservadas; descendência exige processos observados até o MainPID; C1, collectors, dependências e schema v1 preservados.
+- Limitações/pendências: PPID é contexto, não membership autoritativo; snapshot não atômico, cgroups/socket activation/namespaces fora do escopo; revisão, diagramação final do documento e apresentação continuam com o grupo.
+- Próximo bloco: NONE — escopo aprovado encerrado; nenhuma nova extensão iniciada.

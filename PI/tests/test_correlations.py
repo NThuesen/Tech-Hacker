@@ -167,3 +167,94 @@ def test_findings_preserve_layers_and_snapshot_and_issues():
         assert finding.evidence and finding.interpretation and finding.hypothesis and finding.missing_evidence
         assert Finding.from_json(finding.to_json()) == finding
     assert any("stat_unavailable" in gap for gap in results[0].missing_evidence)
+
+
+@pytest.mark.parametrize("pid,chain,provenance", [
+    (42, [42], "direct_main_pid"),
+    (43, [43, 42], "descendant_of_main_pid"),
+    (44, [44, 43, 42], "descendant_of_main_pid"),
+])
+def test_c2_observed_service_ancestry(pid, chain, provenance):
+    snapshot = sample()
+    snapshot.processes.extend([ProcessRecord(43, ppid=42, uid=1000), ProcessRecord(44, ppid=43, uid=1000)])
+    snapshot.sockets = [NetworkRecord(pid, "tcp", "127.0.0.1", 8080, "LISTEN")]
+    before = snapshot.to_json()
+    result = findings(snapshot, "C2")[0]
+    assert result.disposition == "informational"
+    assert result.entities["services"] == ["demo.service"]
+    assert result.entities["processes"] == list(map(str, chain))
+    assert any(f"association={provenance}" in e for e in result.evidence)
+    if len(chain) > 1:
+        assert any(" -> ".join(map(str, chain)) in e for e in result.evidence)
+        assert "não prova de membership" in result.interpretation
+    assert any("cgroups" in gap and "socket activation" in gap for gap in result.missing_evidence)
+    assert findings(snapshot, "C1") == []
+    assert snapshot.to_json() == before
+    assert findings(Snapshot.from_json(before), "C2") == [result]
+    assert Finding.from_json(result.to_json()) == result
+
+
+@pytest.mark.parametrize("records", [
+    [ProcessRecord(43, ppid=1, uid=1000)],  # unrelated
+    [ProcessRecord(43, ppid=None, uid=1000)],
+    [ProcessRecord(43, ppid=999, uid=1000)],
+    [ProcessRecord(43, ppid=43, uid=1000)],
+    [ProcessRecord(43, ppid=44, uid=1000), ProcessRecord(44, ppid=43)],
+    [ProcessRecord(43, ppid=44, uid=1000), ProcessRecord(44, ppid=999)],
+])
+def test_c2_broken_or_unrelated_ancestry_does_not_invent_service(records):
+    snapshot = sample()
+    snapshot.processes.extend(records)
+    snapshot.sockets = [NetworkRecord(43, "tcp", "::", 8080, "LISTEN")]
+    result = findings(snapshot, "C2")[0]
+    assert result.disposition == "inconclusive"
+    assert result.entities["services"] == []
+    assert not any("association=" in e for e in result.evidence)
+    assert any("Cadeia PPID" in gap for gap in result.missing_evidence)
+    assert findings(snapshot, "C2") == [result]
+
+
+def test_c2_missing_main_process_does_not_establish_descendancy():
+    snapshot = sample()
+    snapshot.processes = [ProcessRecord(43, ppid=42, uid=1000)]
+    snapshot.sockets = [NetworkRecord(43, "tcp", "::", 8080, "LISTEN")]
+    result = findings(snapshot, "C2")[0]
+    assert result.entities["services"] == []
+    assert result.disposition == "inconclusive"
+
+
+@pytest.mark.parametrize("missing", ["uid", "address", "port"])
+def test_c2_descendant_with_missing_context_is_inconclusive(missing):
+    snapshot = sample()
+    snapshot.processes.append(ProcessRecord(43, ppid=42, uid=1000))
+    snapshot.sockets = [NetworkRecord(43, "tcp", "::", 8080, "LISTEN")]
+    if missing == "uid":
+        snapshot.processes[-1].uid = None
+    else:
+        setattr(snapshot.sockets[0], f"local_{missing}", None)
+    result = findings(snapshot, "C2")[0]
+    assert result.entities["services"] == ["demo.service"]
+    assert result.disposition == "inconclusive"
+
+
+def test_c2_preserves_multiple_observed_units_and_ancestor_issues():
+    snapshot = sample()
+    snapshot.processes.extend([ProcessRecord(43, ppid=42, uid=1000), ProcessRecord(44, ppid=43, uid=1000)])
+    snapshot.services.append(ServiceRecord("child.service", main_pid=43))
+    snapshot.sockets = [NetworkRecord(43, "udp", "::", 8080, "NONE")]
+    snapshot.issues = [CollectionIssue("processes", "access_denied", "Campo indisponível", "42", "exe")]
+    result = findings(snapshot, "C2")[0]
+    assert result.entities["services"] == ["demo.service", "child.service"]
+    assert any("association=direct_main_pid" in e for e in result.evidence)
+    assert any("association=descendant_of_main_pid" in e for e in result.evidence)
+    assert any("access_denied" in gap for gap in result.missing_evidence)
+    assert "não prova função de servidor" in result.interpretation
+
+
+def test_c1_does_not_use_root_descendant_identity():
+    snapshot = sample(0o777)
+    snapshot.processes[1].uid = 1000
+    snapshot.processes.append(ProcessRecord(43, ppid=42, uid=0))
+    snapshot.sockets = [NetworkRecord(43, "tcp", "::", 8080, "LISTEN")]
+    assert findings(snapshot, "C1") == []
+    assert findings(snapshot, "C2")[0].disposition == "informational"

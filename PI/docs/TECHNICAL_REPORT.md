@@ -1,6 +1,6 @@
 # Endpoint Investigator — material-base do documento técnico
 
-Texto-base para edição e diagramação pelo grupo em **até quatro páginas**. Não é um PDF paginado; conferir o limite após incluir nomes, figuras e formatação. A divisão abaixo sugere uma página por seção. Descreve somente o comportamento implementado em B0–B6.
+Texto-base para edição e diagramação pelo grupo em **até quatro páginas**. Não é um PDF paginado; conferir o limite após incluir nomes, figuras e formatação. A divisão abaixo sugere uma página por seção. Descreve somente o comportamento implementado em B0–B7.
 
 ## 1. Problema e estratégia
 
@@ -22,15 +22,15 @@ Falhas de acesso, desaparecimento de processos, ausência de systemd e recursos 
 
 C1 relaciona serviço ativo, MainPID, UID efetivo e recursos resolvidos. Só produz needs_review quando UID 0 é observado e permissões POSIX sugerem escrita ou substituição por não-root. Root sozinho não basta. Grupo com escrita permanece inconclusivo sem conhecer membros; substituição considera travessia e sticky bit do pai. A hipótese é possível relação insegura de privilégio, sem prova de exploração.
 
-C2 relaciona socket, PID, processo, identidade e serviço. TCP LISTEN e UDP vinculado são contexto; UDP não prova função de servidor. C3 relaciona PPID e identidades apenas de processos relevantes a serviços/listeners. Pai ou identidade ausente resulta em inconclusive. Nomes não determinam risco.
+C2 relaciona socket, PID, processo, identidade e serviço por MainPID direto (`direct_main_pid`) ou cadeia PPID observada (`descendant_of_main_pid`). A associação indireta registra a cadeia de PIDs como evidência. A travessia pura termina em PPID desconhecido, pai ausente, self-parent ou ciclo, sem preencher lacunas; contexto incompleto permanece inconclusivo. TCP LISTEN e UDP vinculado são contexto; UDP não prova função de servidor. C3 relaciona PPID e identidades apenas de processos relevantes a serviços/listeners. Pai ou identidade ausente resulta em inconclusive. Nomes não determinam risco.
 
-Quatro snapshots sintéticos exercitam a CLI em texto e JSON: normal resulta somente em C3 informational; unsafe_service muda o executável de 0755 para 0777 e produz C1 needs_review; listener associa a porta 8080 ao serviço sem alerta de privilégio; partial remove identidade/permissões/pai e produz três inconclusivos. Testes verificam dispositions exatas, rastreabilidade, preservação dos arquivos e operação offline sem coleta, comandos externos ou sockets.
+Quatro snapshots sintéticos exercitam a CLI em texto e JSON: normal resulta somente em C3 informational; unsafe_service muda o executável de 0755 para 0777 e produz C1 needs_review; listener associa a porta 8080 do filho PID 43 ao MainPID 42 pela cadeia 43 → 42, com um C2 e dois C3 informativos, sem alerta de privilégio; partial remove identidade/permissões/pai e produz três inconclusivos. Testes verificam dispositions exatas, rastreabilidade, preservação dos arquivos e operação offline sem coleta, comandos externos ou sockets.
 
 A suíte também cobre parsers, modelos, falhas parciais, permissões, códigos de saída e equivalência entre relatório live e reanálise de snapshot. Execute `.venv/bin/python -m pytest` para obter o resultado atual; o registro da validação está em PROGRESS.md. DEMO.md contém o roteiro e a matriz da rubrica.
 
 ## 4. Limitações e uso de IA
 
-O snapshot não é atômico: PIDs, arquivos e estados podem mudar entre observações. A vinculação por MainPID não garante identidade temporal e não cobre todos os processos filhos do serviço. Falta de privilégios pode ocultar processos e sockets; ausência de registros não comprova ausência de atividade.
+O snapshot não é atômico: PIDs, arquivos e estados podem mudar entre observações. MainPID e PPID não garantem identidade temporal; a ancestralidade observada é contexto, não prova de membership systemd. Cgroups, units .socket, socket activation e PID namespaces/containers permanecem fora do escopo. Falta de privilégios pode ocultar processos e sockets; ausência de registros não comprova ausência de atividade.
 
 Bits POSIX não comprovam acesso efetivo: ACLs, capabilities, flags de mount, atributos imutáveis, namespaces, grupos suplementares, ancestrais e symlinks podem alterar a conclusão. stat segue links. ExecStart com opções/escapes ambíguos não é resolvido; há aviso. Não se mede intenção de configuração, firewall, autenticação ou integridade histórica. Esses limites podem produzir hipóteses incompletas e falsos positivos/negativos, explicitados como lacunas.
 

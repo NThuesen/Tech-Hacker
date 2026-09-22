@@ -288,9 +288,11 @@ O núcleo reutiliza a seleção pura de caminhos de B3, sem executar coletores. 
 
 C1 agrega os recursos de cada serviço: `needs_review` exige estado ativo, UID efetivo 0 observado e sinal POSIX de escrita/substituição. Estado/identidade/recurso/permissão incompletos geram `inconclusive`. Serviço conhecido como inativo ou processo com UID conhecido não-root fica fora dessa hipótese. Configuração User não confirma identidade efetiva. C1 não é emitida para serviço privilegiado com todos os recursos resolvidos e sem sinal de modificação nos bits observados; isso não comprova segurança fora do escopo POSIX.
 
-C2 aceita somente TCP LISTEN e UDP NONE. Em B0-B6, a associação com serviço é direta quando `socket.pid == service.main_pid`. **B7 está aprovado para robustecer somente essa associação**, reutilizando a cadeia PID/PPID já presente no snapshot: além do vínculo direto, um processo de socket poderá ser associado contextualmente a um serviço quando sua cadeia de PPID observada alcançar o `MainPID`. O finding deve registrar se a associação é `direct_main_pid` ou `descendant_of_main_pid` e, no segundo caso, a cadeia de PIDs usada como evidência.
+C2 aceita somente TCP LISTEN e UDP NONE. Desde B7, `_service_associations` em `correlations.py` resolve associação direta (`socket.pid == service.main_pid`) e indireta pela cadeia PID/PPID já presente no snapshot. O finding registra `direct_main_pid` ou `descendant_of_main_pid`; na associação indireta, registra também a cadeia de PIDs e inclui esses processos nas entidades. Avisos de coleta dos ancestrais associados acompanham as lacunas.
 
-A travessia de ancestralidade de B7 deve ser pura, determinística e limitada aos processos já observados. Deve terminar com segurança em `ppid=None`, pai ausente, self-parent ou ciclo. Cadeia incompleta não autoriza inferência positiva. A associação por PPID é contexto investigativo, **não membership autoritativo do systemd**: cgroups, units `.socket`, socket activation, namespaces/containers e outras formas de ownership permanecem fora do escopo e devem aparecer como limitação quando relevantes. B7 não altera C1, collectors, dependências nem o schema JSON v1.
+A travessia é pura, iterativa, determinística e limitada aos processos observados, com conjunto de PIDs visitados. Termina em `ppid=None`, pai ausente, self-parent ou ciclo. Descendência exige registros de todos os processos até o MainPID, inclusive ele; uma interrupção além de um MainPID já alcançado não invalida o trecho observado até esse serviço. Todas as units alcançadas são mantidas na ordem do snapshot, sem escolher ownership exclusivo. O vínculo direto continua registrado mesmo sem ProcessRecord, mas C2 fica inconclusiva nesse caso. Sem associação, a causa de interrupção acompanha as lacunas.
+
+C2 permanece `informational` com processo, UID, endereço/porta e associação observados, ou `inconclusive` quando falta esse contexto. A associação PPID é contexto investigativo, **não membership autoritativo do systemd**: cgroups, units `.socket`, socket activation e PID namespaces/containers aparecem nas limitações dos findings. B7 preserva C1, collectors, dependências e schema JSON v1.
 
 C3 deduplica processos relacionados a serviços/listeners, não percorre toda a árvore para gerar findings indiscriminadamente, e exige pai e UIDs observados para `informational`. Nenhuma diferença de UID ou nome sustenta sozinha conclusão de comprometimento.
 
@@ -448,12 +450,12 @@ Manter fixtures determinísticas:
 
 1. `scenario_normal.json`: serviço legítimo, permissões seguras;
 2. `scenario_unsafe_service.json`: serviço privilegiado + recurso modificável por não-root;
-3. `scenario_listener.json`: listener associado a serviço, sem afirmar vulnerabilidade;
+3. `scenario_listener.json`: listener do filho PID 43 associado ao MainPID 42, sem afirmar vulnerabilidade;
 4. `scenario_partial.json`: dados incompletos -> conclusão inconclusiva.
 
 O teste mais importante para qualidade é provar que sinais isolados não geram conclusão forte.
 
-Em B6, as quatro fixtures acima estão implementadas e `tests/test_scenarios.py` percorre a CLI em texto/JSON, verifica dispositions exatas e preservação dos dados. A análise offline também é exercitada com coleta, comandos e sockets proibidos. O cenário normal possui UID 0 com recursos sem sinal de escrita não-root; o inseguro muda o executável para 0777. Nenhuma condição insegura é criada no host.
+Em B6, as quatro fixtures acima estão implementadas e `tests/test_scenarios.py` percorre a CLI em texto/JSON, verifica dispositions exatas e preservação dos dados. A análise offline também é exercitada com coleta, comandos e sockets proibidos. O cenário normal possui UID 0 com recursos sem sinal de escrita não-root; o inseguro muda o executável para 0777. Nenhuma condição insegura é criada no host. Em B7, o cenário listener passou a demonstrar `descendant_of_main_pid` com a cadeia `43 -> 42`, um C2 e dois C3 informativos; testes unitários cobrem também associação direta, netos e travessias interrompidas.
 
 ## 12. Demonstração prevista
 
@@ -505,7 +507,7 @@ Esses itens adicionam complexidade sem necessidade para atingir a rubrica. B7 li
 
 ## 15. Critério para extensões
 
-B7 é a única extensão atualmente aprovada porque melhora diretamente C2 usando dados já coletados, sem nova dependência, collector ou schema.
+B7 é a única extensão aprovada e foi implementada porque melhora diretamente C2 usando dados já coletados, sem nova dependência, collector ou schema.
 
 Depois de B7, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
 

@@ -16,7 +16,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 EXPECTED = {
     "normal": [("C3", "informational")],
     "unsafe_service": [("C1", "needs_review"), ("C3", "informational")],
-    "listener": [("C2", "informational"), ("C3", "informational")],
+    "listener": [("C2", "informational"), ("C3", "informational"), ("C3", "informational")],
     "partial": [("C1", "inconclusive"), ("C2", "inconclusive"), ("C3", "inconclusive")],
 }
 
@@ -45,6 +45,14 @@ def test_scenario_end_to_end(name):
         assert label in text.stdout
     if name == "unsafe_service":
         assert "0o777" in text.stdout and "/opt/demo/worker" in text.stdout
+    if name == "listener":
+        c2 = report["findings"][0]
+        assert c2["entities"]["services"] == ["demo.service"]
+        assert c2["entities"]["processes"] == ["43", "42"]
+        assert any("association=descendant_of_main_pid" in e for e in c2["evidence"])
+        assert any("43 -> 42" in e for e in c2["evidence"])
+        assert "descendant_of_main_pid" in text.stdout and "43 -> 42" in text.stdout
+        assert "não prova de membership" in text.stdout
     if name == "partial":
         assert "parcial ou com limitações" in text.stdout
     assert path.read_bytes() == original

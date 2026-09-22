@@ -34,7 +34,7 @@ As quatro fixtures são sintéticas e versionadas. Os caminhos nelas são dados:
    .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_listener.json
    ```
 
-   Resultado esperado: C2 e C3 `informational`, sem C1. Relacione `0.0.0.0:8080` → PID 42 → demo.service → UID 0. A porta em escuta não comprova exposição pela rede nem vulnerabilidade; firewall e autenticação não foram observados.
+   Resultado esperado: um C2 e dois C3 `informational`, sem C1. Relacione `0.0.0.0:8080` → filho PID 43 → PPID/MainPID 42 → demo.service, com UID 0 observado. Mostre `association=descendant_of_main_pid` e a cadeia `43 -> 42` na evidência. O vínculo direto, quando o socket usa o próprio MainPID, é identificado como `direct_main_pid`. Ancestralidade é contexto, não membership autoritativo: cgroups, units `.socket`, socket activation e namespaces/containers não foram verificados. A porta em escuta não comprova exposição pela rede nem vulnerabilidade; firewall e autenticação não foram observados.
 5. Mostre dados insuficientes:
 
    ```bash

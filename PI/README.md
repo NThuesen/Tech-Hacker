@@ -4,7 +4,7 @@ PI de Tecnologias Hackers — ferramenta local de investigação de segurança p
 
 ## Status
 
-**B0–B6 concluídos. B7 está aprovado e ainda não foi implementado: robustez da associação processo ↔ serviço por ancestralidade PPID.**
+**B0–B7 concluídos. Escopo planejado implementado; nenhuma nova extensão iniciada.**
 
 O projeto foi deliberadamente desenhado para ser pequeno: snapshot sob demanda, coletores read-only, três correlações explicáveis e saída texto/JSON. Não há banco, servidor web, daemon ou LLM no núcleo.
 
@@ -130,7 +130,7 @@ C1 associa cada serviço aos caminhos resolvidos e ao processo MainPID. Produz `
 
 C2 descreve sockets TCP LISTEN ou UDP vinculado, processo, identidade e serviços associados. Produz `informational` quando o vínculo está completo, ou `inconclusive` quando faltam dados. C3 descreve PPID e identidades somente dos processos ligados a serviços/listeners, uma vez por PID; pai ou UID ausente mantém o resultado inconclusivo.
 
-**Estado antes de B7:** a associação C2 com serviço é direta por `socket.pid == service.main_pid`. O B7 aprovado vai preservar esse caso e adicionar associação contextual quando a cadeia PPID observada do processo do socket alcançar o `MainPID`. A mudança usará somente dados já presentes no snapshot, sem novo collector, dependência ou schema; cgroups e socket activation continuam fora do escopo.
+C2 registra `direct_main_pid` quando `socket.pid == service.main_pid` e `descendant_of_main_pid` quando a cadeia PPID observada alcança o MainPID. Na associação indireta, a evidência mostra a cadeia (por exemplo, `43 -> 42`) e as entidades incluem os processos usados. A resolução é pura, termina em pai ausente, PPID desconhecido, self-parent ou ciclo e não preenche lacunas. Todas as units alcançadas são preservadas, sem escolher ownership exclusivo. Descendência exige registros de todos os PIDs até o MainPID; ausência de associação mantém C2 inconclusiva. A ancestralidade é contexto, não prova autoritativa de membership systemd.
 
 Cada finding separa fatos com referências às entidades, interpretação, hipótese e evidência ausente. Avisos pertinentes de coleta acompanham as lacunas. Identificadores C1/C2 usam o índice da entidade no snapshot; C3 usa PID. São reproduzíveis para o mesmo snapshot, sem promessa de estabilidade entre snapshots. Nomes e portas isolados nunca determinam risco. Limitações POSIX, exposição real e identidade temporal continuam exigindo investigação.
 
@@ -162,14 +162,14 @@ Os testes validam round-trip de snapshots completos e parciais, preservação da
 | --- | --- |
 | normal | C3 informational; sem C1 apesar de UID 0 |
 | unsafe_service | C1 needs_review por executável 0777 + serviço privilegiado; C3 informational |
-| listener | C2/C3 informational; root + porta não produz C1 |
+| listener | C2 informational por filho PID 43 → MainPID 42; dois C3 informational; sem C1 |
 | partial | C1/C2/C3 inconclusive, com avisos de coleta |
 
 Os testes end-to-end executam texto e JSON, verificam resultados exatos, fontes e preservação das fixtures. Testes adicionais bloqueiam coleta/comandos/sockets durante a análise offline. O [roteiro](docs/DEMO.md) explica cada etapa e mapeia todos os critérios da rubrica. A instalação deve ser preparada antes da demonstração; a análise das fixtures não depende de internet.
 
 ## Limitações
 
-- A coleta não é atômica; relações por PID podem sofrer corrida ou reutilização. MainPID não representa necessariamente todos os filhos de um serviço.
+- A coleta não é atômica; relações por PID podem sofrer corrida ou reutilização. A cadeia PPID cobre somente ancestrais observados; cgroups, units `.socket`, socket activation e PID namespaces/containers não são resolvidos.
 - Visibilidade depende das permissões e do namespace; listas vazias e ausência de findings não comprovam segurança ou cobertura completa.
 - Permissões POSIX são indícios. ACLs, capabilities, mounts, atributos imutáveis, membros de grupos, ancestrais e symlinks podem mudar o acesso efetivo.
 - ExecStart ambíguo não é executado nem resolvido por tentativa. Sockets UDP podem pertencer a clientes; escuta não comprova exposição externa.

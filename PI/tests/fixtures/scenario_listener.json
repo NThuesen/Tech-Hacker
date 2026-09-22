@@ -31,6 +31,19 @@
         "/opt/demo/worker"
       ],
       "exe": "/opt/demo/worker"
+    },
+    {
+      "pid": 43,
+      "ppid": 42,
+      "name": "demo-child",
+      "username": "root",
+      "uid": 0,
+      "gid": 0,
+      "status": "sleeping",
+      "cmdline": [
+        "/opt/demo/worker"
+      ],
+      "exe": "/opt/demo/worker"
     }
   ],
   "services": [
@@ -47,7 +60,7 @@
   ],
   "sockets": [
     {
-      "pid": 42,
+      "pid": 43,
       "protocol": "tcp",
       "local_address": "0.0.0.0",
       "local_port": 8080,
