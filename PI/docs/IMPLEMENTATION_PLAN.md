@@ -193,14 +193,65 @@ Fechar a rubrica com evidência reproduzível e documentação.
 - README cobre todos os itens pedidos no enunciado;
 - cada critério da rubrica está demonstrável.
 
-## B7 — Extensões somente se houver ganho claro
+## B7 — Robustez da associação processo ↔ serviço
 
-Este bloco começa vazio e é opcional.
+### Objetivo
 
-Exemplos aceitáveis após B0-B6:
+Melhorar a correlação C2 sem criar novas fontes de dados: além do vínculo direto por `MainPID`, reconhecer quando o processo que possui um socket é **descendente observado** do `MainPID` de um serviço pela cadeia de PPID já presente no snapshot.
 
-- journal do systemd para enriquecer C1/C2;
-- hash local para registrar integridade observada;
-- export Markdown.
+A melhoria existe para reduzir falsos "serviço não associado" em serviços que criam workers/filhos, preservando uma interpretação conservadora.
 
-Não adicionar uma extensão apenas para aumentar o número de features. Qualquer proposta deve explicar qual critério da rubrica melhora e qual complexidade adiciona.
+### Escopo
+
+- criar uma resolução **pura** de associação processo ↔ serviço usando apenas `ProcessRecord.pid/ppid` e `ServiceRecord.main_pid`;
+- manter associação direta quando `process.pid == service.main_pid`;
+- adicionar associação indireta quando a cadeia observada `PID -> PPID -> ...` alcança o `MainPID`;
+- registrar no finding C2 a proveniência da associação:
+  - `direct_main_pid`;
+  - `descendant_of_main_pid`;
+- para associação indireta, incluir a cadeia observada de PIDs como evidência;
+- proteger a travessia contra processo pai ausente, `ppid=None`, self-parent, ciclos e dados parciais;
+- reutilizar a mesma lógica em análise live e offline; nenhuma consulta adicional ao host durante correlação;
+- atualizar testes e documentação afetada;
+- demonstrar pelo menos um listener pertencente a processo filho, preferencialmente adaptando o cenário integrado de listener ou adicionando uma fixture mínima se isso deixar o teste mais claro.
+
+### Guardrails
+
+A ancestralidade PPID é **evidência contextual**, não prova autoritativa de membership systemd. Não afirmar que um processo "pertence" definitivamente à unit apenas por ancestralidade.
+
+Continuam fora de escopo:
+
+- cgroups/systemd membership;
+- units `.socket`;
+- socket activation;
+- PID namespaces/containers;
+- nova dependência;
+- novo collector;
+- mudança do schema JSON v1.
+
+C1 permanece baseada no `MainPID` e identidade efetiva observada do serviço; B7 não deve ampliar a heurística de privilégio.
+
+### Aceite
+
+- associação direta por `MainPID` continua funcionando;
+- processo filho e neto podem ser associados ao serviço quando a cadeia PPID observada alcança o `MainPID`;
+- processo sem ancestral de serviço não é falsamente associado;
+- cadeia incompleta, pai ausente, self-parent e ciclo terminam de forma segura e determinística;
+- C2 registra `direct_main_pid` ou `descendant_of_main_pid` em evidência;
+- associação indireta registra a cadeia de PIDs usada para sustentar a interpretação;
+- C2 continua `informational` quando o contexto necessário está completo e `inconclusive` quando faltam evidências;
+- nenhuma nova coleta, dependência ou alteração de schema é introduzida;
+- testes unitários cobrem direto, filho, neto, não relacionado, pai ausente e ciclo;
+- existe cobertura end-to-end da associação por descendência;
+- README, ARCHITECTURE, DEMO e TECHNICAL_REPORT são atualizados para refletir o comportamento real;
+- suíte completa passa.
+
+### Encerramento
+
+Depois de concluir e validar B7:
+
+- marque B7 como `DONE`;
+- registre o resumo em `PROGRESS.md`;
+- defina `CURRENT_BLOCK: NONE`;
+- registre o status geral como escopo planejado concluído;
+- **não inicie nenhuma nova extensão** sem solicitação explícita.
