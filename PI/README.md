@@ -4,7 +4,7 @@ PI de Tecnologias Hackers — ferramenta local de investigação de segurança p
 
 ## Status
 
-**B0–B6 concluídos: CLI live/offline, correlações, cenários integrados e material de demonstração.**
+**B0–B6 concluídos. B7 está aprovado e ainda não foi implementado: robustez da associação processo ↔ serviço por ancestralidade PPID.**
 
 O projeto foi deliberadamente desenhado para ser pequeno: snapshot sob demanda, coletores read-only, três correlações explicáveis e saída texto/JSON. Não há banco, servidor web, daemon ou LLM no núcleo.
 
@@ -129,6 +129,8 @@ findings = analyze_snapshot(snapshot)
 C1 associa cada serviço aos caminhos resolvidos e ao processo MainPID. Produz `needs_review` somente com estado ativo, UID efetivo 0 observado e indicação POSIX de escrita/substituição por não-root. Dados insuficientes produzem `inconclusive`; serviço root com permissões observadas sem esse sinal não gera C1. User configurado como root não substitui UID observado. Ausência de C1 não prova segurança.
 
 C2 descreve sockets TCP LISTEN ou UDP vinculado, processo, identidade e serviços associados. Produz `informational` quando o vínculo está completo, ou `inconclusive` quando faltam dados. C3 descreve PPID e identidades somente dos processos ligados a serviços/listeners, uma vez por PID; pai ou UID ausente mantém o resultado inconclusivo.
+
+**Estado antes de B7:** a associação C2 com serviço é direta por `socket.pid == service.main_pid`. O B7 aprovado vai preservar esse caso e adicionar associação contextual quando a cadeia PPID observada do processo do socket alcançar o `MainPID`. A mudança usará somente dados já presentes no snapshot, sem novo collector, dependência ou schema; cgroups e socket activation continuam fora do escopo.
 
 Cada finding separa fatos com referências às entidades, interpretação, hipótese e evidência ausente. Avisos pertinentes de coleta acompanham as lacunas. Identificadores C1/C2 usam o índice da entidade no snapshot; C3 usa PID. São reproduzíveis para o mesmo snapshot, sem promessa de estabilidade entre snapshots. Nomes e portas isolados nunca determinam risco. Limitações POSIX, exposição real e identidade temporal continuam exigindo investigação.
 
