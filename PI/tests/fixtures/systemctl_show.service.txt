@@ -1,0 +1,7 @@
+MainPID=42
+User=root
+Group=root
+ExecStart={ path=/opt/demo ; argv[]=/opt/demo --option=a=b ; ignore_errors=no ; }
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/demo.service

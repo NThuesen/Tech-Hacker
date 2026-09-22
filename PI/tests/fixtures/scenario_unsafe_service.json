@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "collected_at": "2026-09-22T12:00:00+00:00",
+    "hostname": "synthetic-demo",
+    "platform": "Linux"
+  },
+  "processes": [
+    {
+      "pid": 1,
+      "ppid": 0,
+      "name": "init",
+      "username": "root",
+      "uid": 0,
+      "gid": 0,
+      "status": "sleeping",
+      "cmdline": [
+        "/sbin/init"
+      ],
+      "exe": "/sbin/init"
+    },
+    {
+      "pid": 42,
+      "ppid": 1,
+      "name": "demo",
+      "username": "root",
+      "uid": 0,
+      "gid": 0,
+      "status": "sleeping",
+      "cmdline": [
+        "/opt/demo/worker"
+      ],
+      "exe": "/opt/demo/worker"
+    }
+  ],
+  "services": [
+    {
+      "unit": "demo.service",
+      "active_state": "active",
+      "sub_state": "running",
+      "main_pid": 42,
+      "configured_user": "root",
+      "configured_group": "root",
+      "fragment_path": "/etc/systemd/system/demo.service",
+      "exec_start": "/opt/demo/worker"
+    }
+  ],
+  "sockets": [],
+  "permissions": [
+    {
+      "path": "/opt/demo/worker",
+      "exists": true,
+      "file_type": "file",
+      "owner_uid": 0,
+      "owner_name": "root",
+      "group_gid": 0,
+      "group_name": "root",
+      "mode": 511,
+      "owner_writable": true,
+      "group_writable": true,
+      "other_writable": true,
+      "parent_path": "/opt/demo",
+      "parent_mode": 493
+    },
+    {
+      "path": "/opt/demo",
+      "exists": true,
+      "file_type": "directory",
+      "owner_uid": 0,
+      "owner_name": "root",
+      "group_gid": 0,
+      "group_name": "root",
+      "mode": 493,
+      "owner_writable": true,
+      "group_writable": false,
+      "other_writable": false,
+      "parent_path": null,
+      "parent_mode": null
+    },
+    {
+      "path": "/etc/systemd/system/demo.service",
+      "exists": true,
+      "file_type": "file",
+      "owner_uid": 0,
+      "owner_name": "root",
+      "group_gid": 0,
+      "group_name": "root",
+      "mode": 420,
+      "owner_writable": true,
+      "group_writable": false,
+      "other_writable": false,
+      "parent_path": "/etc/systemd/system",
+      "parent_mode": 493
+    },
+    {
+      "path": "/etc/systemd/system",
+      "exists": true,
+      "file_type": "directory",
+      "owner_uid": 0,
+      "owner_name": "root",
+      "group_gid": 0,
+      "group_name": "root",
+      "mode": 493,
+      "owner_writable": true,
+      "group_writable": false,
+      "other_writable": false,
+      "parent_path": null,
+      "parent_mode": null
+    }
+  ],
+  "issues": []
+}

@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: B0`
+`CURRENT_BLOCK: B7`
 
-Status geral: **planejamento concluído; implementação ainda não iniciada**.
+Status geral: **B0-B6 concluídos e validados; B7 opcional, não iniciado**.
 
 ## Regras de atualização
 
@@ -21,13 +21,13 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 
 | Bloco | Estado | Resumo |
 | --- | --- | --- |
-| B0 | READY | Scaffold, modelos e contrato de snapshot |
-| B1 | BLOCKED | Processos e rede; depende de B0 |
-| B2 | BLOCKED | Serviços systemd; depende de B0/B1 |
-| B3 | BLOCKED | Permissões contextuais; depende de B1/B2 |
-| B4 | BLOCKED | Correlações/findings; depende de B1-B3 |
-| B5 | BLOCKED | CLI/relatórios/offline; depende de B4 |
-| B6 | BLOCKED | Cenários, docs e demo; depende de B5 |
+| B0 | DONE | Scaffold, modelos e contrato JSON v1 validados; 21 testes passam |
+| B1 | DONE | Processos e sockets normalizados, falhas parciais e snapshot; suíte com 36 testes passa |
+| B2 | DONE | Serviços systemd, wrapper read-only e vínculo MainPID; suíte com 55 testes passa |
+| B3 | DONE | Permissões contextuais e indicação POSIX separada; suíte com 81 testes passa |
+| B4 | DONE | C1/C2/C3 e findings rastreáveis; suíte com 109 testes passa |
+| B5 | DONE | CLI live/offline e relatórios; suíte com 116 testes passa |
+| B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
 | B7 | OPTIONAL | Extensões somente após B0-B6 |
 
 ## Formato do resumo de conclusão
@@ -48,4 +48,58 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 
 ## Histórico
 
-Nenhum bloco implementado ainda.
+### 2026-09-22 — B0 concluído
+
+- Entregue: pacote com layout src/tests, modelos, JSON v1, CLI de ajuda e comandos canônicos no README/AGENTS.md.
+- Validação: instalação editable com .[dev] em PI/.venv; import e --help funcionam; 21 testes passam com Python 3.13.12 e pytest 9.1.1.
+- Decisões: dataclasses, campos desconhecidos como null, issues estruturados, validação de tipos/versão JSON e contrato documentado em ARCHITECTURE.md.
+- Limitações/pendências: sem coleta, correlação ou scan/analyze; compatibilidade mínima declarada Python 3.11, execução validada apenas em 3.13.12.
+- Próximo bloco: B1.
+
+### 2026-09-22 — B1 concluído
+
+- Entregue: coletores psutil de processos e sockets, composição de snapshot parcial na API Python e testes com mocks.
+- Validação: 36 testes passam em Python 3.13.12; ajuda CLI validada; coleta local read-only com 180 processos, 1 socket e 90 issues preservada em round-trip JSON; git diff --check sem erros.
+- Decisões: UID/GID efetivos; falha por campo preserva dados disponíveis; corrida detectada mantém apenas PID; TCP LISTEN e UDP vinculado sem peer; documentação atualizada.
+- Limitações/pendências: visibilidade parcial sem privilégios, snapshot não atômico e UDP sem prova de função servidor; serviços/permissões e comandos CLI ainda não implementados.
+- Próximo bloco: B2.
+
+### 2026-09-22 — B2 concluído
+
+- Entregue: wrapper central read-only, collector systemd, parser com fixtures, associação MainPID -> ProcessRecord e integração no snapshot.
+- Validação: 55 testes passam em Python 3.13.12; coleta local observou 21 serviços e 1 aviso de serviços, com round-trip JSON válido; casos sem systemd, sem MainPID e falhas por unit cobertos.
+- Decisões: timeout por comando, sem shell/autenticação interativa; configuração vazia preservada; MainPID zero como null; vínculos resolvidos sem duplicar processos no JSON.
+- Limitações/pendências: coleta não atômica, ExecStart ainda bruto, permissões e análise ainda ausentes; próximo bloco não iniciado.
+- Próximo bloco: B3.
+
+### 2026-09-22 — B3 concluído
+
+- Entregue: seleção deduplicada, stat de recursos/pais imediatos, resolução de identidades e indicação POSIX separada dos fatos, sem findings.
+- Validação: 81 testes passam em Python 3.13.12; coleta local com 109 registros de permissões e 5 avisos da fonte preservada em round-trip JSON; ajuda CLI funciona.
+- Decisões: group-writable inconclusivo sem membros; substituição considera travessia/sticky bit; ExecStart ambíguo gera aviso; sem varredura global ou alteração do host.
+- Limitações/pendências: ACLs, capabilities, mounts, namespaces, ancestrais e symlinks não verificados; correlações ainda não implementadas.
+- Próximo bloco: B4.
+
+### 2026-09-22 — B4 concluído
+
+- Entregue: analyze_snapshot puro, C1/C2/C3 com evidência, interpretação, hipótese, lacunas e disposition; documentação da API.
+- Validação: 109 testes passam em Python 3.13.12, incluindo positivos, negativos, inconclusivos, round-trip de findings, determinismo e preservação do snapshot.
+- Decisões: C1 exige privilégio observado e recurso modificável para needs_review; C2/C3 são contexto; avisos pertinentes preservados; nomes não determinam risco.
+- Limitações/pendências: análise limitada às evidências do snapshot e aos bits POSIX; CLI, relatórios e fluxo de arquivos offline pertencem a B5, ainda não iniciado.
+- Próximo bloco: B5.
+
+### 2026-09-22 — B5 concluído
+
+- Entregue: scan/analyze, texto com quatro camadas, relatório JSON v1, save-snapshot e resumo de coleta parcial.
+- Validação: 116 testes passam; fluxo real scan -> snapshot temporário -> analyze produziu JSON idêntico (185 processos, 21 serviços, 1 socket e 111 permissões); needs_review mantém exit 0.
+- Decisões: arquivo novo com modo 0600 sem sobrescrita; relatório separado do snapshot; códigos 0/1/2 e stdout/stderr documentados.
+- Limitações/pendências: coleta parcial segue as limitações já registradas; cenários integrados e material de demonstração reservados a B6, ainda não iniciado.
+- Próximo bloco: B6.
+
+### 2026-09-22 — B6 concluído
+
+- Entregue: fixtures normal/unsafe_service/listener/partial, testes end-to-end, README final, DEMO.md com matriz da rubrica e TECHNICAL_REPORT.md como base de até quatro páginas.
+- Validação: 124 testes passam em Python 3.13.12; quatro cenários em texto/JSON com resultados exatos, normal sem C1, inseguro com needs_review e parcial inconclusivo; offline testado sem coleta/comandos/sockets.
+- Decisões: demonstração sintética reproduzível após setup, sem criar incidente no host; coleta live como complemento; nenhum item de B7 adicionado.
+- Limitações/pendências: grupo deve revisar autoria, diagramar e conferir quatro páginas do documento técnico e realizar apresentação; limitações de coleta/análise documentadas no README.
+- Próximo bloco: B7 (opcional, não iniciado).

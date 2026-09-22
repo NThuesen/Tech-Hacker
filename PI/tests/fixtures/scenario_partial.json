@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "collected_at": "2026-09-22T12:00:00+00:00",
+    "hostname": "synthetic-demo",
+    "platform": "Linux"
+  },
+  "processes": [
+    {
+      "pid": 42,
+      "ppid": 999,
+      "name": "demo",
+      "uid": null,
+      "exe": "/opt/demo/worker"
+    }
+  ],
+  "services": [
+    {
+      "unit": "demo.service",
+      "active_state": "active",
+      "sub_state": "running",
+      "main_pid": 42,
+      "configured_user": "root",
+      "configured_group": "root",
+      "fragment_path": "/etc/systemd/system/demo.service",
+      "exec_start": "/opt/demo/worker"
+    }
+  ],
+  "sockets": [
+    {
+      "pid": 42,
+      "protocol": "tcp",
+      "local_address": "0.0.0.0",
+      "local_port": 8080,
+      "status": "LISTEN"
+    }
+  ],
+  "permissions": [],
+  "issues": [
+    {
+      "collector": "processes",
+      "code": "access_denied",
+      "message": "Identidade não observada no cenário sintético.",
+      "entity": "42",
+      "field": "uid",
+      "severity": "warning"
+    },
+    {
+      "collector": "permissions",
+      "code": "stat_unavailable",
+      "message": "Permissões não disponíveis no cenário sintético.",
+      "entity": "/opt/demo/worker",
+      "field": null,
+      "severity": "warning"
+    }
+  ]
+}

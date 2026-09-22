@@ -134,7 +134,27 @@ Não rode comandos destrutivos. Não use `sudo`, não altere permissões do host
 
 ### Comandos canônicos
 
-O projeto ainda não possui scaffold. **Não invente comandos permanentes.** B0 deve definir e validar instalação, teste e execução; depois atualize esta seção e o README com os comandos exatos.
+Comandos definidos em B0, executados a partir de `PI/`:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -c 'import endpoint_investigator'
+.venv/bin/python -m endpoint_investigator --help
+.venv/bin/python -m pytest
+```
+
+Use o ambiente virtual local. Desde B5, os comandos canônicos de investigação são:
+
+```bash
+.venv/bin/python -m endpoint_investigator scan
+.venv/bin/python -m endpoint_investigator scan --format json
+.venv/bin/python -m endpoint_investigator scan --save-snapshot snapshot.json
+.venv/bin/python -m endpoint_investigator analyze snapshot.json
+.venv/bin/python -m endpoint_investigator analyze snapshot.json --format json
+```
+
+O destino de snapshot deve ser novo. Coleta e análise também estão disponíveis por `scan.collect_snapshot()` e `correlations.analyze_snapshot(snapshot)` na API Python.
 
 ## 10. Disciplina de mudança
 

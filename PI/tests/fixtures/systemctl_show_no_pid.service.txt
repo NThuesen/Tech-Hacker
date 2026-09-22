@@ -1,0 +1,7 @@
+MainPID=0
+User=
+Group=
+ExecStart=
+ActiveState=inactive
+SubState=dead
+FragmentPath=/etc/systemd/system/demo.service

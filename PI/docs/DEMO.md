@@ -1,0 +1,81 @@
+# Demonstração reproduzível
+
+Execute os comandos a partir de `PI/`. Prepare previamente o ambiente virtual conforme o README; instalar dependências pode exigir internet. Com o ambiente instalado, toda a demonstração abaixo funciona offline, sem incidentes reais, sudo, criação de serviços ou alteração de permissões.
+
+## Preparação
+
+```bash
+.venv/bin/python -m endpoint_investigator --help
+.venv/bin/python -m pytest
+```
+
+As quatro fixtures são sintéticas e versionadas. Os caminhos nelas são dados: `analyze` não os consulta nem executa seus comandos. UID 0, PID 42 e porta 8080 não representam um incidente real.
+
+## Roteiro de cinco a sete minutos
+
+1. Apresente o problema: observar processos, serviços e permissões e explicar relações, sem confundir sinal isolado com incidente. Mostre o fluxo coleta → modelos → correlações → findings → apresentação.
+2. Mostre o caso normal:
+
+   ```bash
+   .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_normal.json
+   ```
+
+   Resultado esperado: somente C3 `informational`. O serviço usa UID 0, mas executável 0755, unit 0644 e pais 0755 pertencem a root. Não há C1. Explique que ausência de alerta não comprova segurança absoluta.
+3. Mostre a alteração controlada nos dados:
+
+   ```bash
+   .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_unsafe_service.json
+   ```
+
+   Resultado esperado: C1 `needs_review` e C3 `informational`. A diferença relevante é `/opt/demo/worker` com modo 0777. Aponte unit, MainPID 42, UID 0, caminho, owner/grupo e modo. Leia separadamente evidência, interpretação, hipótese e evidência ausente. Não afirme exploração: ACLs, mounts, integridade e intenção ainda precisam de confirmação.
+4. Mostre contexto de rede:
+
+   ```bash
+   .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_listener.json
+   ```
+
+   Resultado esperado: C2 e C3 `informational`, sem C1. Relacione `0.0.0.0:8080` → PID 42 → demo.service → UID 0. A porta em escuta não comprova exposição pela rede nem vulnerabilidade; firewall e autenticação não foram observados.
+5. Mostre dados insuficientes:
+
+   ```bash
+   .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_partial.json
+   ```
+
+   Resultado esperado: C1, C2 e C3 `inconclusive`, resumo parcial e avisos. Faltam UID, permissões e pai PID 999. A ferramenta não transforma User=root em prova de UID efetivo.
+6. Mostre o formato auditável:
+
+   ```bash
+   .venv/bin/python -m endpoint_investigator analyze tests/fixtures/scenario_unsafe_service.json --format json
+   ```
+
+   Aponte `report_version`, snapshot original, summary, entidades e camadas dos findings. Todos os cenários retornam código zero, pois findings não são falhas de execução.
+
+## Complemento ao vivo na Kali
+
+```bash
+.venv/bin/python -m endpoint_investigator scan
+```
+
+Escolha um serviço/processo e explique seus dados e eventuais lacunas. Resultados dependem do host; não espere quantidades ou dispositions fixas. Se systemd ou permissões não estiverem disponíveis, mostre a coleta parcial e continue com as fixtures. A parte reproduzível da demonstração não depende do host.
+
+Opcionalmente, para demonstrar persistência, use um nome de arquivo que ainda não exista:
+
+```bash
+.venv/bin/python -m endpoint_investigator scan --save-snapshot demo-snapshot.json
+.venv/bin/python -m endpoint_investigator analyze demo-snapshot.json
+```
+
+Esse arquivo é uma saída local solicitada, com modo 0600. Pode conter argumentos e caminhos reais do host; não faz parte das fixtures nem deve ser incluído no material público. A CLI recusa sobrescrita. A demonstração principal não precisa gravar dados reais.
+
+## Cobertura da rubrica
+
+| Critério | Evidência demonstrável |
+| --- | --- |
+| Funcionamento — 3,0 | scan local; quatro comandos analyze; texto/JSON; testes de salvar/reanalisar em test_cli.py |
+| Processos/permissões/serviços — 2,0 | C1 inseguro mostra UID/PID, unit e modo do executável/pai; collectors testados com falhas |
+| Correlação — 2,0 | inseguro prova C1; listener prova C2; normal mostra C3 |
+| Qualidade da análise — 1,5 | quatro camadas no texto; normal sem C1; partial com três inconclusivos |
+| Arquitetura/código/documentação — 1,0 | fronteiras em ARCHITECTURE.md, testes e README com fontes/comandos/limitações |
+| Demonstração e domínio — 0,5 | roteiro offline e explicação das hipóteses, limites e diferenças entre os cenários |
+
+Os testes demonstram comportamento do software; a apresentação e a avaliação acadêmica continuam sob responsabilidade do grupo.
