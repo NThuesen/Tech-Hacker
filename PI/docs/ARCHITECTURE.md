@@ -288,7 +288,11 @@ O núcleo reutiliza a seleção pura de caminhos de B3, sem executar coletores. 
 
 C1 agrega os recursos de cada serviço: `needs_review` exige estado ativo, UID efetivo 0 observado e sinal POSIX de escrita/substituição. Estado/identidade/recurso/permissão incompletos geram `inconclusive`. Serviço conhecido como inativo ou processo com UID conhecido não-root fica fora dessa hipótese. Configuração User não confirma identidade efetiva. C1 não é emitida para serviço privilegiado com todos os recursos resolvidos e sem sinal de modificação nos bits observados; isso não comprova segurança fora do escopo POSIX.
 
-C2 aceita somente TCP LISTEN e UDP NONE; vínculos ausentes de processo, UID, serviço ou endpoint resultam em `inconclusive`. A descrição de UDP evita afirmar que seja servidor. C3 deduplica processos relacionados a serviços/listeners, não percorre toda a árvore, e exige pai e UIDs observados para `informational`. Nenhuma diferença de UID ou nome sustenta sozinha conclusão de comprometimento.
+C2 aceita somente TCP LISTEN e UDP NONE. Em B0-B6, a associação com serviço é direta quando `socket.pid == service.main_pid`. **B7 está aprovado para robustecer somente essa associação**, reutilizando a cadeia PID/PPID já presente no snapshot: além do vínculo direto, um processo de socket poderá ser associado contextualmente a um serviço quando sua cadeia de PPID observada alcançar o `MainPID`. O finding deve registrar se a associação é `direct_main_pid` ou `descendant_of_main_pid` e, no segundo caso, a cadeia de PIDs usada como evidência.
+
+A travessia de ancestralidade de B7 deve ser pura, determinística e limitada aos processos já observados. Deve terminar com segurança em `ppid=None`, pai ausente, self-parent ou ciclo. Cadeia incompleta não autoriza inferência positiva. A associação por PPID é contexto investigativo, **não membership autoritativo do systemd**: cgroups, units `.socket`, socket activation, namespaces/containers e outras formas de ownership permanecem fora do escopo e devem aparecer como limitação quando relevantes. B7 não altera C1, collectors, dependências nem o schema JSON v1.
+
+C3 deduplica processos relacionados a serviços/listeners, não percorre toda a árvore para gerar findings indiscriminadamente, e exige pai e UIDs observados para `informational`. Nenhuma diferença de UID ou nome sustenta sozinha conclusão de comprometimento.
 
 ### C1 — Serviço privilegiado + recurso modificável
 
@@ -324,7 +328,10 @@ Evidência ausente: não há prova de alteração ou exploração; logs, integri
 socket LISTEN
 -> PID
 -> processo
--> serviço associado
+-> associação direta por MainPID
+   OU
+-> cadeia PPID observada até o MainPID
+-> serviço associado contextualmente
 -> identidade
 -> contexto de exposição
 ```
@@ -333,15 +340,22 @@ Fontes: rede + processo + serviço.
 
 Gera um finding `informational` ou `inconclusive`, não uma vulnerabilidade.
 
-Objetivo: responder quem está escutando, sob qual identidade, por qual serviço e em qual endereço/porta.
+Objetivo: responder quem está escutando, sob qual identidade, qual serviço possui relação observável com o processo e em qual endereço/porta.
 
-Interpretação: o processo está aceitando conexões naquele endpoint.
+A proveniência da associação deve ficar explícita no finding:
 
-Hipótese: se a exposição for inesperada, o serviço merece investigação.
+- `direct_main_pid`: PID do socket é o próprio `MainPID`;
+- `descendant_of_main_pid`: a cadeia PPID observada alcança o `MainPID`.
 
-Evidência ausente: intenção da configuração, firewall, origem permitida, autenticação e necessidade de negócio.
+Quando a associação for indireta, a cadeia de PIDs usada deve aparecer na evidência. Um pai ausente, ciclo ou cadeia interrompida não deve ser adivinhado.
 
-Isso demonstra explicitamente que **root + porta aberta não significa vulnerabilidade**.
+Interpretação: o processo está aceitando conexões naquele endpoint; uma relação por ancestralidade PPID é contexto observado, não prova definitiva de membership da unit.
+
+Hipótese: se a exposição for inesperada, o processo/serviço merece investigação.
+
+Evidência ausente: intenção da configuração, firewall, origem permitida, autenticação, necessidade de negócio e, quando necessário, membership systemd por cgroups/socket activation.
+
+Isso demonstra explicitamente que **root + porta aberta não significa vulnerabilidade** e melhora a correlação sem adicionar nova fonte de dados.
 
 ### C3 — Processo + PPID + usuário
 
@@ -482,17 +496,22 @@ Não implementar antes de todos os blocos obrigatórios estarem concluídos:
 - captura de pacotes;
 - varredura global do filesystem;
 - detecção genérica de malware;
-- auto-remediação.
+- auto-remediação;
+- modelagem completa de cgroups/systemd membership;
+- units `.socket` e socket activation;
+- resolução específica de containers/PID namespaces.
 
-Esses itens adicionam complexidade sem necessidade para atingir a rubrica.
+Esses itens adicionam complexidade sem necessidade para atingir a rubrica. B7 limita-se à ancestralidade PPID já observada no snapshot.
 
 ## 15. Critério para extensões
 
-Uma extensão só entra se:
+B7 é a única extensão atualmente aprovada porque melhora diretamente C2 usando dados já coletados, sem nova dependência, collector ou schema.
 
-1. um requisito obrigatório já estiver estável;
-2. ela melhorar diretamente uma correlação, explicabilidade ou demonstração;
-3. vier acompanhada de teste;
-4. não duplicar capacidade existente.
+Depois de B7, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
 
-A prioridade é uma ferramenta pequena, defensável e bem demonstrada.
+1. um requisito obrigatório deve continuar estável;
+2. a mudança deve melhorar diretamente uma correlação, explicabilidade ou demonstração;
+3. deve vir acompanhada de teste;
+4. não deve duplicar capacidade existente.
+
+A prioridade continua sendo uma ferramenta pequena, defensável e bem demonstrada.
