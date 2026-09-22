@@ -18,7 +18,7 @@ Leia nesta ordem:
 4. [docs/PROGRESS.md](docs/PROGRESS.md) — bloco atual e handoff;
 5. [AGENTS.md](AGENTS.md) — regras para agentes de código.
 
-Para apresentação: [roteiro e cobertura da rubrica](docs/DEMO.md) e [material-base do documento técnico de até quatro páginas](docs/TECHNICAL_REPORT.md).
+Para apresentação e entrega: [roteiro e cobertura da rubrica](docs/DEMO.md), [documento técnico final (DOCX)](docs/Endpoint_Investigator_Relatorio_Tecnico_Final.docx) e [fonte textual do relatório](docs/TECHNICAL_REPORT.md).
 
 ## Ideia central
 
@@ -176,4 +176,4 @@ Os testes end-to-end executam texto e JSON, verificam resultados exatos, fontes 
 - Não há verificação de exploração, integridade histórica, firewall, autenticação ou intenção de configuração. Hipóteses podem ter falsos positivos e lacunas; os dados ausentes são explicitados.
 - Python mínimo declarado é 3.11; a validação registrada foi feita em 3.13.12. Os cenários são sintéticos e não equivalem a uma avaliação em todos os ambientes Linux.
 
-IA auxiliou o desenvolvimento/documentação; a ferramenta não usa IA em execução. O material técnico é uma base Markdown a ser diagramada e revisada pelo grupo dentro do limite de quatro páginas.
+IA auxiliou o desenvolvimento/documentação; a ferramenta não usa IA em execução. O documento técnico final está versionado em `docs/Endpoint_Investigator_Relatorio_Tecnico_Final.docx`, com quatro páginas; `docs/TECHNICAL_REPORT.md` permanece como fonte textual de apoio.
