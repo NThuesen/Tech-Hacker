@@ -35,7 +35,7 @@ Ao concluir o bloco:
 2. atualize docs afetadas;
 3. atualize a tabela/status em `docs/PROGRESS.md`;
 4. acrescente o resumo de conclusão no formato definido lá;
-5. aponte `CURRENT_BLOCK` para o próximo bloco, mas pare.
+5. aponte `CURRENT_BLOCK` para o próximo bloco aprovado; se não houver outro bloco aprovado, defina `CURRENT_BLOCK: NONE`; então pare.
 
 Esse registro deve ser curto: o objetivo é permitir que outra sessão do Codex entenda imediatamente o que foi feito, validado e o que falta.
 
@@ -160,7 +160,7 @@ O destino de snapshot deve ser novo. Coleta e análise também estão disponíve
 
 - Faça o menor patch correto para o bloco atual.
 - Não misture refactors oportunistas.
-- Não implemente itens de B7 antes de B0-B6.
+- B7 está aprovado apenas para robustecer a associação processo ↔ serviço por ancestralidade PPID. Não transforme esse bloco em um pacote genérico de extensões.
 - Não adicione feature apenas por parecer interessante.
 - Para mudança arquitetural, explique o ganho e atualize `ARCHITECTURE.md`.
 - Para mudança de escopo acadêmico, não altere o brief silenciosamente; sinalize a divergência.
@@ -177,7 +177,7 @@ O README final deve cobrir, no mínimo:
 - correlações implementadas;
 - limitações.
 
-O documento técnico de até quatro páginas será derivado do comportamento real ao final, não de funcionalidades planejadas que ainda não existam.
+Existe um material-base do documento técnico em `docs/TECHNICAL_REPORT.md`; mantenha-o alinhado somente ao comportamento realmente implementado e deixe a paginação/revisão final para o grupo.
 
 ## 12. Definição de pronto
 
