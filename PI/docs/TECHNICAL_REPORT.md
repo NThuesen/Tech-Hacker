@@ -1,6 +1,6 @@
 # Endpoint Investigator — material-base do documento técnico
 
-Texto-base para edição e diagramação pelo grupo em **até quatro páginas**. Não é um PDF paginado; conferir o limite após incluir nomes, figuras e formatação. A divisão abaixo sugere uma página por seção. Descreve somente o comportamento implementado em B0–B8. O DOCX diagramado de B7 ainda deve receber esta atualização e ter sua paginação conferida pelo grupo.
+Texto-base de apoio ao documento técnico final de **até quatro páginas**. A divisão abaixo sugere uma página por seção e descreve somente o comportamento implementado em B0–B8. O DOCX final versionado incorpora B8 e foi novamente validado com quatro páginas.
 
 ## 1. Problema e estratégia
 
