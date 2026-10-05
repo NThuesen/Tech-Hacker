@@ -4,7 +4,7 @@ PI de Tecnologias Hackers — ferramenta local de investigação de segurança p
 
 ## Status
 
-**B0–B7 concluídos. Escopo planejado implementado; nenhuma nova extensão iniciada.**
+**B0–B7 concluídos. B8 está aprovado e ainda não foi implementado: integração offline com o dataset generator fornecido pela disciplina.**
 
 O projeto foi deliberadamente desenhado para ser pequeno: snapshot sob demanda, coletores read-only, três correlações explicáveis e saída texto/JSON. Não há banco, servidor web, daemon ou LLM no núcleo.
 
@@ -45,6 +45,8 @@ Cada finding deve separar **evidência, interpretação, hipótese e evidência 
 O núcleo deve funcionar na VM Kali e também analisar snapshots JSON salvos, permitindo testes e demonstrações determinísticas.
 
 Coleta de processos, sockets, serviços, permissões e análise por correlações disponíveis pela API Python e pelos comandos `scan`/`analyze`. Quatro cenários sintéticos permitem demonstrar a investigação sem internet ou incidentes reais, após preparar o ambiente.
+
+O script original fornecido pelo professor está preservado em `tools/generate_dataset.py`. B8 adicionará `analyze-dataset DATASET_DIR` para normalizar a saída dele em `Snapshot` v1 e reutilizar as mesmas correlações C1/C2/C3. Os datasets gerados localmente ficam em `training-generated/`, ignorado pelo Git.
 
 ## Arquitetura e fontes
 
