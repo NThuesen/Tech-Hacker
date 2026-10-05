@@ -156,11 +156,13 @@ Use o ambiente virtual local. Desde B5, os comandos canônicos de investigação
 
 O destino de snapshot deve ser novo. Coleta e análise também estão disponíveis por `scan.collect_snapshot()` e `correlations.analyze_snapshot(snapshot)` na API Python.
 
+Durante B8, o generator fornecido pelo professor deve ser tratado como artefato de entrada preservado em `tools/generate_dataset.py`. O importador pode ler somente seus arquivos de saída; nunca execute `cmd`/`ExecStart` nem consulte no host os caminhos descritos pelo dataset.
+
 ## 10. Disciplina de mudança
 
 - Faça o menor patch correto para o bloco atual.
 - Não misture refactors oportunistas.
-- B7 está aprovado apenas para robustecer a associação processo ↔ serviço por ancestralidade PPID. Não transforme esse bloco em um pacote genérico de extensões.
+- B7 foi concluído. B8 está aprovado somente para integrar o `tools/generate_dataset.py` fornecido pela disciplina como fonte offline adicional; não transforme o bloco em análise genérica de logs ou nova família de correlações.
 - Não adicione feature apenas por parecer interessante.
 - Para mudança arquitetural, explique o ganho e atualize `ARCHITECTURE.md`.
 - Para mudança de escopo acadêmico, não altere o brief silenciosamente; sinalize a divergência.
