@@ -7,3 +7,6 @@ dist/
 
 /snapshots-local/*
 !/snapshots-local/.gitkeep
+
+/training-generated/*
+!/training-generated/.gitkeep
