@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: NONE`
+`CURRENT_BLOCK: B8`
 
-Status geral: **Escopo planejado concluído: B0-B7 implementados e validados; nenhuma extensão adicional iniciada**.
+Status geral: **B0-B7 concluídos e validados; B8 aprovado para integrar o dataset generator fornecido pela disciplina, ainda não iniciado**.
 
 ## Regras de atualização
 
@@ -29,6 +29,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B5 | DONE | CLI live/offline e relatórios; suíte com 116 testes passa |
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
 | B7 | DONE | C2 direta/descendente com proveniência e cadeia PPID, travessia segura e demo de filho; suíte com 139 testes passa |
+| B8 | READY | Importar e analisar datasets gerados pelo script do professor sem alterar o núcleo C1/C2/C3 |
 
 ## Formato do resumo de conclusão
 
@@ -110,4 +111,4 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Validação: 139 testes passam em Python 3.13.12; direto, filho, neto, não relacionado, dados ausentes, self-parent e ciclo cobertos; CLI end-to-end texto/JSON e offline sem coleta; import/--help e scan local → snapshot temporário → analyze com JSON idêntico; git diff --check sem erros.
 - Decisões: todas as units alcançadas preservadas; descendência exige processos observados até o MainPID; C1, collectors, dependências e schema v1 preservados.
 - Limitações/pendências: PPID é contexto, não membership autoritativo; snapshot não atômico, cgroups/socket activation/namespaces fora do escopo; documento técnico final de quatro páginas versionado; apresentação continua com o grupo.
-- Próximo bloco: NONE — escopo aprovado encerrado; nenhuma nova extensão iniciada.
+- Próximo bloco: B8 — integração com o dataset generator fornecido pela disciplina (aprovado, não iniciado).
