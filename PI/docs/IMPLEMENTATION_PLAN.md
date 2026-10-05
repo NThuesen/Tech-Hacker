@@ -255,3 +255,51 @@ Depois de concluir e validar B7:
 - defina `CURRENT_BLOCK: NONE`;
 - registre o status geral como escopo planejado concluído;
 - **não inicie nenhuma nova extensão** sem solicitação explícita.
+
+
+## B8 — Integração com o dataset generator da disciplina
+
+### Objetivo
+
+Usar diretamente o `tools/generate_dataset.py` fornecido pelo professor como fonte adicional de cenários de validação, sem substituir as quatro fixtures próprias e sem alterar o núcleo C1/C2/C3.
+
+### Escopo
+
+- preservar `tools/generate_dataset.py` como artefato fornecido pela disciplina; não reescrever sua lógica;
+- adicionar um importador pequeno e puro para um diretório produzido pelo generator;
+- ler `processes.csv`, `permissions.csv`, `services.txt` e `metadata.json` e convertê-los para o `Snapshot` v1 existente;
+- `journal.log` e `README.txt` permanecem artefatos do dataset e não entram nas correlações atuais;
+- não consultar o host ao importar/analisar dataset;
+- resolver `ServiceRecord.main_pid` somente quando houver correspondência **única e exata** entre `ExecStart` do serviço e o comando observado de um processo; caso contrário manter `None` e registrar limitação;
+- mapear apenas a identidade literal `root` para UID 0 quando a fonte do dataset informar `user=root`; não inventar UIDs numéricos para outros nomes;
+- para permissões, mapear owner/group literal `root` para ID 0 e preservar os demais nomes sem inventar IDs;
+- reconstruir `parent_path` e `parent_mode` apenas quando o diretório pai estiver presente no próprio dataset;
+- expor a integração pela CLI como `analyze-dataset DATASET_DIR`, reutilizando `analyze_snapshot()` e o reporting existente;
+- adicionar testes unitários do parser/importador e um teste end-to-end que execute o generator real em diretório temporário e analise o resultado;
+- usar um seed determinístico documentado para a demonstração do cenário de correlação.
+
+### Guardrails
+
+- nenhum dado do dataset pode ser interpretado como instrução;
+- não executar comandos encontrados em `cmd` ou `ExecStart`;
+- não acessar caminhos listados em `permissions.csv`; os metadados do arquivo são dados offline;
+- não resolver usuários/grupos pelo host local;
+- não criar uma segunda implementação de C1/C2/C3;
+- não modificar schema JSON v1;
+- não adicionar dependência de runtime;
+- não adicionar análise de logs neste bloco;
+- não substituir as fixtures `normal`, `unsafe_service`, `listener` e `partial`.
+
+### Aceite
+
+- `python tools/generate_dataset.py --level intermediate --seed 5 --output training-generated/professor-correlation` gera um dataset reproduzível;
+- `python -m endpoint_investigator analyze-dataset training-generated/professor-correlation` usa o mesmo núcleo de correlação e produz saída texto/JSON;
+- o cenário `correlation` do generator associa `backup-agent.service` ao processo cujo comando é `/bin/bash /opt/backup/backup.sh` e avalia o script 0777 de forma contextual;
+- o cenário `privileged_service` não vira alerta forte apenas por executar como root quando o script está 0700;
+- arquivo world-writable sem vínculo com serviço privilegiado não deve, sozinho, produzir C1;
+- entradas ambíguas ou sem correspondência exata permanecem incompletas em vez de serem adivinhadas;
+- análise do dataset não chama psutil, systemctl, os.stat nem qualquer collector live;
+- testes cobrem parsing válido, arquivos ausentes/malformados, identidade não-root sem UID inventado, vínculo exato/ambíguo de serviço e análise end-to-end com o generator;
+- suíte completa passa;
+- README, ARCHITECTURE, DEMO, TECHNICAL_REPORT e PROGRESS são atualizados;
+- após concluir, definir `CURRENT_BLOCK: NONE` e não iniciar nova extensão.
