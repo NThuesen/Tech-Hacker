@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: B8`
+`CURRENT_BLOCK: NONE`
 
-Status geral: **B0-B7 concluídos e validados; B8 aprovado para integrar o dataset generator fornecido pela disciplina, ainda não iniciado**.
+Status geral: **B0-B8 concluídos e validados; integração offline com o dataset do professor disponível. Nenhum próximo bloco aprovado**.
 
 ## Regras de atualização
 
@@ -29,7 +29,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B5 | DONE | CLI live/offline e relatórios; suíte com 116 testes passa |
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
 | B7 | DONE | C2 direta/descendente com proveniência e cadeia PPID, travessia segura e demo de filho; suíte com 139 testes passa |
-| B8 | READY | Importar e analisar datasets gerados pelo script do professor sem alterar o núcleo C1/C2/C3 |
+| B8 | DONE | Importador offline e analyze-dataset; generator preservado, núcleo/schema inalterados; suíte com 174 testes passa |
 
 ## Formato do resumo de conclusão
 
@@ -112,3 +112,11 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Decisões: todas as units alcançadas preservadas; descendência exige processos observados até o MainPID; C1, collectors, dependências e schema v1 preservados.
 - Limitações/pendências: PPID é contexto, não membership autoritativo; snapshot não atômico, cgroups/socket activation/namespaces fora do escopo; documento técnico final de quatro páginas versionado; apresentação continua com o grupo.
 - Próximo bloco: B8 — integração com o dataset generator fornecido pela disciplina (aprovado, não iniciado).
+
+### 2026-10-05 — B8 concluído
+
+- Entregue: importador puro de textos e leitura dos quatro arquivos do generator, CLI analyze-dataset texto/JSON, proveniência de MainPID e limitações por fonte; README/ARCHITECTURE/DEMO/TECHNICAL_REPORT atualizados.
+- Validação: 174 testes passam em Python 3.13.12; generator real com seeds 5/1/2 em temporários, casos positivos/negativos/ambíguos, entradas ausentes/malformadas, round-trip v1 e bloqueio de consultas ao host; comando canônico seed 5 executado em training-generated/professor-correlation, texto/JSON e import/--help válidos; git diff --check sem erros.
+- Decisões: somente root literal recebe ID 0; MainPID por igualdade textual única com aviso; pais somente do CSV; falhas estruturais retornam 1, lacunas preservam resultado parcial; generator, fixtures, C1/C2/C3, schema e dependências preservados.
+- Limitações/pendências: sem sockets/logs ou cronologia; generated_at varia e não representa coleta; permissões ausentes mantêm inconclusivos; grupo deve incorporar B8 ao DOCX de B7 e conferir quatro páginas/apresentação.
+- Próximo bloco: NONE — nenhuma nova extensão iniciada.

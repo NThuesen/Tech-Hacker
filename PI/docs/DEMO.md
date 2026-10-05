@@ -79,3 +79,24 @@ Esse arquivo é uma saída local solicitada, com modo 0600. Pode conter argument
 | Demonstração e domínio — 0,5 | roteiro offline e explicação das hipóteses, limites e diferenças entre os cenários |
 
 Os testes demonstram comportamento do software; a apresentação e a avaliação acadêmica continuam sob responsabilidade do grupo.
+
+## Complemento com o dataset do professor (B8)
+
+```bash
+.venv/bin/python tools/generate_dataset.py --level intermediate --seed 5 --output training-generated/professor-correlation
+.venv/bin/python -m endpoint_investigator analyze-dataset training-generated/professor-correlation
+.venv/bin/python -m endpoint_investigator analyze-dataset training-generated/professor-correlation --format json
+```
+
+Mostre backup-agent.service, MainPID 2417 inferido por igualdade textual única entre ExecStart e cmd, usuário root e `/opt/backup/backup.sh` 0777 com pai 0755. Resultado: um C1 needs_review para backup, dois C1 inconclusive para ssh/cron sem permissões e três C3 informational. Explique a hipótese de alteração do script, sem afirmar exploração. A proveniência do MainPID aparece como limitação: não veio de systemd. Não há C2 porque não há sockets nessa fonte; curl ou eventos do journal não provam escuta.
+
+Contraprovas reproduzíveis:
+
+```bash
+.venv/bin/python tools/generate_dataset.py --level intermediate --seed 1 --output training-generated/professor-privileged
+.venv/bin/python -m endpoint_investigator analyze-dataset training-generated/professor-privileged
+.venv/bin/python tools/generate_dataset.py --level intermediate --seed 2 --output training-generated/professor-permission
+.venv/bin/python -m endpoint_investigator analyze-dataset training-generated/professor-permission
+```
+
+Seed 1: script 0700, nenhum needs_review; C1 fica inconclusivo por recursos ausentes como `/bin/bash`. Seed 2: `/opt/reports/report.sh` 0777 não tem vínculo com serviço e não entra em C1. O generator registra o segundo cenário como normal em metadata apesar da permissão adicional. Não conclua segurança absoluta. O seed reproduz o cenário, mas generated_at varia. Estes exemplos complementam as quatro fixtures próprias; comandos e caminhos dos dados não são executados/consultados durante a análise.

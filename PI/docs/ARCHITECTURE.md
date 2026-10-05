@@ -84,7 +84,7 @@ Também existem caminhos offline:
 snapshot JSON -> correlation -> findings -> text/JSON
 ```
 
-e, no B8 aprovado:
+e, desde B8:
 
 ```text
 dataset generator da disciplina
@@ -109,6 +109,7 @@ PI/
 │       ├── cli.py
 │       ├── models.py
 │       ├── system.py
+│       ├── dataset.py
 │       ├── scan.py
 │       ├── permissions.py
 │       ├── collectors/
@@ -419,7 +420,7 @@ Sua saída possui:
 - `journal.log`: eventos sintéticos;
 - `metadata.json` e `README.txt`: contexto do cenário.
 
-B8 adiciona somente uma camada de **normalização offline** desses dados para o `Snapshot` v1. Regras conservadoras:
+B8 implementa somente uma camada de **normalização offline** desses dados para o `Snapshot` v1. Regras conservadoras:
 
 - comando de processo pode fornecer `cmdline` e executável apenas quando extraível sem executar nada;
 - usuário literal `root` pode ser normalizado para UID 0; outros nomes não recebem UID inventado;
@@ -430,14 +431,18 @@ B8 adiciona somente uma camada de **normalização offline** desses dados para o
 - caminhos do dataset nunca são consultados via `os.stat` no host;
 - `journal.log` permanece fora da análise atual: logs são fonte opcional e B8 não cria correlação temporal.
 
-A interface prevista é:
+A interface implementada é:
 
 ```bash
 python -m endpoint_investigator analyze-dataset DATASET_DIR
 python -m endpoint_investigator analyze-dataset DATASET_DIR --format json
 ```
 
-O objetivo é provar compatibilidade com o material da disciplina, não substituir as quatro fixtures controladas do projeto.
+`dataset.py` separa `import_dataset(directory)` (leitura de quatro arquivos fixos) de `parse_dataset(processes, permissions, services, metadata)` (normalização pura). Não há alteração do schema, núcleo de correlação ou dependências. Cabeçalhos/linhas inválidos, PID/PPID inválidos, modos fora de 0000–7777, caminhos não absolutos, identificadores duplicados e metadata inválida são rejeitados com ValueError. Arquivos ausentes geram OSError; a CLI retorna 1. Não há descarte silencioso de linhas malformadas.
+
+Dados válidos mas incompletos geram CollectionIssue por fonte/entidade: UID não-root, GID não informado, comando não resolvido, pai ausente e falta de correspondência única não são preenchidos. Somente running confirma active; outros estados ficam desconhecidos com aviso. MainPID inferido tem proveniência explícita, propagada pelo núcleo às lacunas. FragmentPath/grupo configurado não são inventados. Metadata de coleta fica desconhecida; cenário, nível, seed e generated_at aparecem no aviso synthetic_source. Timestamps por linha não viram cronologia. Rede registra source_unavailable; journal.log e README.txt não são lidos.
+
+A demonstração usa intermediate/seed 5 (correlation), PID 2417 e script 0777. Seeds 1 e 2 exercitam respectivamente script 0700 e permissão ampla sem vínculo. O cenário é reproduzível; generated_at varia porque o generator usa o relógio atual. As quatro fixtures próprias continuam preservadas.
 
 ## 10. CLI implementada em B5
 
@@ -551,9 +556,9 @@ Esses itens adicionam complexidade sem necessidade para atingir a rubrica. B7 li
 
 ## 16. Critério para extensões
 
-B7 foi implementado para melhorar diretamente C2. B8 é a única extensão atualmente aprovada: integra o dataset generator fornecido pela disciplina como uma fonte offline adicional, sem nova dependência, collector live ou schema.
+B7 foi implementado para melhorar diretamente C2. B8 foi concluído como a última extensão aprovada: integra o dataset generator fornecido pela disciplina como uma fonte offline adicional, sem nova dependência, collector live ou schema.
 
-Depois de B7, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
+Depois de B8, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
 
 1. um requisito obrigatório deve continuar estável;
 2. a mudança deve melhorar diretamente uma correlação, explicabilidade ou demonstração;

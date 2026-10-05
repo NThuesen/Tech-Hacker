@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 from .correlations import analyze_snapshot
+from .dataset import import_dataset
 from .models import Snapshot
 from .reporting import build_report, render_json, render_text
 from .scan import collect_snapshot
@@ -29,13 +30,18 @@ def main(argv: list[str] | None = None) -> int:
     scan.add_argument("--save-snapshot", metavar="ARQUIVO", help="Salvar snapshot em arquivo novo")
     analyze = commands.add_parser("analyze", help="Analisar um snapshot JSON sem consultar o host")
     analyze.add_argument("snapshot", metavar="SNAPSHOT")
-    for command in (scan, analyze):
+    dataset = commands.add_parser("analyze-dataset", help="Analisar dataset da disciplina sem consultar o host")
+    dataset.add_argument("directory", metavar="DATASET_DIR")
+    for command in (scan, analyze, dataset):
         command.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
     try:
-        snapshot = collect_snapshot() if args.command == "scan" else Snapshot.from_json(
-            Path(args.snapshot).read_text(encoding="utf-8")
-        )
+        if args.command == "scan":
+            snapshot = collect_snapshot()
+        elif args.command == "analyze-dataset":
+            snapshot = import_dataset(args.directory)
+        else:
+            snapshot = Snapshot.from_json(Path(args.snapshot).read_text(encoding="utf-8"))
         report = build_report(snapshot, analyze_snapshot(snapshot))
         if args.command == "scan" and args.save_snapshot:
             save_snapshot(args.save_snapshot, snapshot)
