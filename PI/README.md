@@ -196,4 +196,4 @@ Somente o nome literal root recebe UID/owner UID/group GID 0. Outros nomes mant�
 - Não há verificação de exploração, integridade histórica, firewall, autenticação ou intenção de configuração. Hipóteses podem ter falsos positivos e lacunas; os dados ausentes são explicitados.
 - Python mínimo declarado é 3.11; a validação registrada foi feita em 3.13.12. Os cenários são sintéticos e não equivalem a uma avaliação em todos os ambientes Linux.
 
-IA auxiliou o desenvolvimento/documentação; a ferramenta não usa IA em execução. O documento técnico diagramado de B7 está versionado em `docs/Endpoint_Investigator_Relatorio_Tecnico_Final.docx`, com quatro páginas; `docs/TECHNICAL_REPORT.md` inclui B8; o grupo deve incorporar essa atualização ao DOCX e conferir novamente o limite de quatro páginas.
+IA auxiliou o desenvolvimento/documentação; a ferramenta não usa IA em execução. O documento técnico final em `docs/Endpoint_Investigator_Relatorio_Tecnico_Final.docx` incorpora B8 e permanece com quatro páginas; `docs/TECHNICAL_REPORT.md` é a fonte textual de apoio.
