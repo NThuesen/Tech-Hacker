@@ -78,13 +78,25 @@ Nenhum collector deve precisar de `sudo` para o fluxo normal. Falta de permissã
              text           JSON
 ```
 
-Também deve existir um caminho offline:
+Também existem caminhos offline:
 
 ```text
 snapshot JSON -> correlation -> findings -> text/JSON
 ```
 
-Isso permite testes determinísticos e uma demonstração reproduzível usando datasets/fixtures, além da execução real na Kali.
+e, no B8 aprovado:
+
+```text
+dataset generator da disciplina
+-> processes.csv / permissions.csv / services.txt / metadata.json
+-> importador offline
+-> Snapshot v1
+-> correlation
+-> findings
+-> text/JSON
+```
+
+Isso permite testes determinísticos e demonstrações reproduzíveis usando fixtures próprias e também o material fornecido pela disciplina, além da execução real na Kali. O importador B8 não cria uma segunda análise: depois da normalização, reutiliza exatamente `analyze_snapshot()` e o reporting existentes.
 
 ## 4. Estrutura alvo do código
 
@@ -395,7 +407,39 @@ Prioridade:
 
 Não adicionar busca global por SUID, arquivos world-writable ou cron no escopo mínimo.
 
-## 9. CLI implementada em B5
+## 9. Integração aprovada com dataset da disciplina (B8)
+
+O arquivo `tools/generate_dataset.py` é o generator fornecido pelo professor e deve ser preservado como artefato externo ao núcleo.
+
+Sua saída possui:
+
+- `processes.csv`: PID, PPID, nome de usuário, estado e comando;
+- `permissions.csv`: caminho, tipo, owner/group nominais e modo;
+- `services.txt`: unit, estado, usuário configurado e ExecStart;
+- `journal.log`: eventos sintéticos;
+- `metadata.json` e `README.txt`: contexto do cenário.
+
+B8 adiciona somente uma camada de **normalização offline** desses dados para o `Snapshot` v1. Regras conservadoras:
+
+- comando de processo pode fornecer `cmdline` e executável apenas quando extraível sem executar nada;
+- usuário literal `root` pode ser normalizado para UID 0; outros nomes não recebem UID inventado;
+- owner/group literal `root` pode ser normalizado para ID 0; outras identidades mantêm o nome e ID desconhecido;
+- serviço recebe `MainPID` somente quando seu `ExecStart` coincide de forma única e exata com o comando de um processo do mesmo dataset;
+- estado `running` do arquivo de serviços normaliza para `active_state=active` / `sub_state=running`;
+- `parent_path` e `parent_mode` vêm apenas de linhas presentes no próprio `permissions.csv`;
+- caminhos do dataset nunca são consultados via `os.stat` no host;
+- `journal.log` permanece fora da análise atual: logs são fonte opcional e B8 não cria correlação temporal.
+
+A interface prevista é:
+
+```bash
+python -m endpoint_investigator analyze-dataset DATASET_DIR
+python -m endpoint_investigator analyze-dataset DATASET_DIR --format json
+```
+
+O objetivo é provar compatibilidade com o material da disciplina, não substituir as quatro fixtures controladas do projeto.
+
+## 10. CLI implementada em B5
 
 Interface disponível após instalação do pacote:
 
@@ -415,7 +459,7 @@ O comando `analyze` executa as mesmas correlações sobre snapshot salvo. Ele ex
 
 `--save-snapshot` grava somente snapshot v1, cria arquivo novo com modo 0600 e recusa sobrescrita. A coleta continua read-only exceto por essa saída expressamente solicitada. `analyze` não chama coletores. Saída normal em stdout, erros em stderr; código 0 inclui findings e resultados parciais, 1 indica falha de entrada/saída ou JSON/contrato inválido, 2 indica uso inválido da CLI.
 
-## 10. Tratamento de falhas
+## 11. Tratamento de falhas
 
 Um endpoint real muda enquanto é observado. Portanto:
 
@@ -427,7 +471,7 @@ Um endpoint real muda enquanto é observado. Portanto:
 
 O relatório deve indicar quando a investigação ficou parcial.
 
-## 11. Testes necessários
+## 12. Testes necessários
 
 ### Unitários
 
@@ -457,7 +501,7 @@ O teste mais importante para qualidade é provar que sinais isolados não geram 
 
 Em B6, as quatro fixtures acima estão implementadas e `tests/test_scenarios.py` percorre a CLI em texto/JSON, verifica dispositions exatas e preservação dos dados. A análise offline também é exercitada com coleta, comandos e sockets proibidos. O cenário normal possui UID 0 com recursos sem sinal de escrita não-root; o inseguro muda o executável para 0777. Nenhuma condição insegura é criada no host. Em B7, o cenário listener passou a demonstrar `descendant_of_main_pid` com a cadeia `43 -> 42`, um C2 e dois C3 informativos; testes unitários cobrem também associação direta, netos e travessias interrompidas.
 
-## 12. Demonstração prevista
+## 13. Demonstração prevista
 
 Roteiro operacional implementado em [DEMO.md](DEMO.md), com comandos offline e cobertura da rubrica. O material-base do documento acadêmico está em [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md); a paginação final deve ser conferida pelo grupo.
 
@@ -472,7 +516,7 @@ A demonstração deve ser curta e reproduzível:
 
 Isso demonstra domínio técnico sem depender de criar um incidente real.
 
-## 13. Cobertura da rubrica
+## 14. Cobertura da rubrica
 
 | Critério | Como a arquitetura cobre |
 | --- | --- |
@@ -483,7 +527,7 @@ Isso demonstra domínio técnico sem depender de criar um incidente real.
 | Arquitetura/código/docs — 1,0 | módulos pequenos, uma dependência de runtime, documentação e testes |
 | Demonstração/domínio — 0,5 | roteiro live + fixtures normal, insegura e parcial |
 
-## 14. Fora do escopo mínimo
+## 15. Fora do escopo mínimo
 
 Não implementar antes de todos os blocos obrigatórios estarem concluídos:
 
@@ -505,9 +549,9 @@ Não implementar antes de todos os blocos obrigatórios estarem concluídos:
 
 Esses itens adicionam complexidade sem necessidade para atingir a rubrica. B7 limita-se à ancestralidade PPID já observada no snapshot.
 
-## 15. Critério para extensões
+## 16. Critério para extensões
 
-B7 é a única extensão aprovada e foi implementada porque melhora diretamente C2 usando dados já coletados, sem nova dependência, collector ou schema.
+B7 foi implementado para melhorar diretamente C2. B8 é a única extensão atualmente aprovada: integra o dataset generator fornecido pela disciplina como uma fonte offline adicional, sem nova dependência, collector live ou schema.
 
 Depois de B7, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
 
