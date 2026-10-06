@@ -31,15 +31,25 @@ def render_text(report: dict) -> str:
         else "sem avisos registrados (não comprova cobertura completa)"),
         "Registros: " + ", ".join(f"{key}={value}" for key, value in summary["counts"].items()),
         "Findings: " + ", ".join(f"{key}={value}" for key, value in summary["findings"].items()),
+        "Dispositions são estados da investigação/evidência, não níveis de risco:",
+        "  informational: contexto observável útil; não afirma vulnerabilidade.",
+        "  inconclusive: faltam evidências necessárias para avaliar a relação investigada.",
+        "  needs_review: evidência concreta sustenta uma relação potencialmente insegura; requer revisão humana, sem provar alteração, exploração ou comprometimento.",
+        "IDs como C1:1 são identificadores técnicos, não níveis de risco.",
     ]
     for issue in report["snapshot"]["issues"]:
         lines.append(f"Aviso [{issue['collector']}/{issue['code']}, {issue['severity']}]: {issue['message']} (entidade={issue['entity']!r}, campo={issue['field']!r})")
     if not report["findings"]:
         lines.append("Nenhum finding produzido; isso não comprova ausência de problemas.")
     for finding in report["findings"]:
+        primary_kind = {"C1": "services", "C2": "sockets", "C3": "processes"}.get(finding["correlation"])
+        primary = finding["entities"].get(primary_kind, [])
         lines.extend([
-            "", f"[{finding['id']}] {finding['title']} — {finding['disposition']}",
+            "", finding["title"],
+            "ID técnico: " + finding["id"],
             "Correlação: " + finding["correlation"],
+            "Entidade principal: " + (f"{primary_kind}={primary[0]}" if primary else "não informada"),
+            "Disposition: " + finding["disposition"],
             "Entidades: " + json.dumps(finding["entities"], ensure_ascii=False),
             "Evidência:", *[f"  - {item}" for item in finding["evidence"]],
             "Interpretação: " + finding["interpretation"],

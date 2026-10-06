@@ -41,6 +41,18 @@ def test_scenario_end_to_end(name):
             assert path_ref in {p.path for p in source.permissions}
     text = subprocess.run(command, capture_output=True, text=True, timeout=15)
     assert text.returncode == 0 and not text.stderr
+    for explanation in (
+        "informational: contexto observável útil; não afirma vulnerabilidade.",
+        "inconclusive: faltam evidências necessárias para avaliar a relação investigada.",
+        "needs_review: evidência concreta sustenta uma relação potencialmente insegura",
+        "IDs como C1:1 são identificadores técnicos, não níveis de risco.",
+    ):
+        assert explanation in text.stdout
+    for finding in report["findings"]:
+        kind = {"C1": "services", "C2": "sockets", "C3": "processes"}[finding["correlation"]]
+        assert (f"ID técnico: {finding['id']}\nCorrelação: {finding['correlation']}\n"
+                f"Entidade principal: {kind}={finding['entities'][kind][0]}\n"
+                f"Disposition: {finding['disposition']}") in text.stdout
     for label in ("Evidência:", "Interpretação:", "Hipótese:", "Evidência ausente:"):
         assert label in text.stdout
     if name == "unsafe_service":

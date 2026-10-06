@@ -4,7 +4,7 @@ PI de Tecnologias Hackers — ferramenta local de investigação de segurança p
 
 ## Status
 
-**B0–B8 concluídos: coleta live, snapshots JSON e integração offline com o dataset do professor. B9 aprovado e ainda não iniciado: clareza semântica dos findings e do relatório textual.**
+**B0–B9 concluídos: coleta live, snapshots JSON, integração offline com o dataset do professor e clareza semântica dos findings e do relatório textual. Nenhum próximo bloco aprovado.**
 
 O projeto foi deliberadamente desenhado para ser pequeno: snapshot sob demanda, coletores read-only, três correlações explicáveis e saída texto/JSON. Não há banco, servidor web, daemon ou LLM no núcleo.
 
@@ -90,6 +90,8 @@ Para usar a CLI, execute a partir de `PI/`:
 O relatório JSON v1 contém `report_version`, `snapshot`, `summary` e `findings`. O arquivo salvo por `--save-snapshot` contém somente o snapshot JSON v1, aceito por `analyze`; um relatório completo não é um arquivo de entrada de snapshot. O resumo inclui contagens, dispositions e `collection_status`: `partial_or_limited` quando há issues, ou `no_reported_issues` quando não há avisos registrados, sem garantir cobertura completa.
 
 Texto apresenta evidência, interpretação, hipótese e evidência ausente, além das entidades e dos avisos de coleta. Relatórios vão para stdout; erros para stderr. Códigos: **0** para execução concluída, inclusive findings e coleta parcial; **1** para falha de leitura, gravação ou dados inválidos; **2** para argumentos inválidos. Findings não são erros de execução.
+
+O texto inclui uma legenda das dispositions: `informational` oferece contexto sem afirmar vulnerabilidade; `inconclusive` indica falta de evidências necessárias para avaliar a relação; `needs_review` indica evidência concreta de uma relação potencialmente insegura, sujeita a revisão humana, sem provar alteração, exploração ou comprometimento. São estados da investigação/evidência, não níveis de risco. Cada cabeçalho separa ID técnico, correlação, entidade principal e disposition. Por exemplo, `C1:2` é um identificador, não uma severidade. Os campos e IDs do JSON v1 permanecem preservados.
 
 ```python
 from endpoint_investigator.scan import collect_snapshot
@@ -182,6 +184,8 @@ Execute a partir de `PI/`:
 `dataset.import_dataset(directory)` lê `processes.csv`, `permissions.csv`, `services.txt` e `metadata.json`. `dataset.parse_dataset(processes, permissions, services, metadata)` normaliza esses quatro textos sem I/O. O Snapshot v1 resultante usa o mesmo `analyze_snapshot()` e reporting, sem alterar C1/C2/C3 ou adicionar dependências. O generator original permanece intacto.
 
 O seed 5 seleciona `correlation`: backup-agent.service → PID 2417 → `/bin/bash /opt/backup/backup.sh` → script 0777 gera C1 `needs_review`, sem afirmar exploração. Outros serviços ficam inconclusivos por permissões ausentes. MainPID exige correspondência textual única e exata de ExecStart/cmd; a proveniência inferida aparece nos issues e nas lacunas dos findings. Não há escolha entre duplicatas ou aproximação por nome.
+
+O resultado contém 3 `informational`, 1 `needs_review` e 2 `inconclusive`. Em `cron.service` (`C1:1`), a interpretação explica que a relação escrita/privilégio não pôde ser avaliada por falta de permissões; a hipótese pede evidências faltantes. Em `backup-agent.service` (`C1:2`), a interpretação identifica `/opt/backup/backup.sh`, modo `0777` e owner UID 0 como suporte POSIX para revisão. A hipótese é condicional: se houver alteração por não-root e posterior execução pelo serviço privilegiado, código modificado pode executar com privilégios elevados. Alteração e exploração não foram demonstradas; todas as lacunas continuam no finding.
 
 Somente o nome literal root recebe UID/owner UID/group GID 0. Outros nomes mantêm IDs desconhecidos. Pais vêm apenas de registros de diretórios presentes no CSV; caminhos e identidades nunca são consultados no host. Nenhum comando dos dados é executado. GID dos processos, FragmentPath e grupo configurado não são fornecidos. Entradas malformadas, identificadores duplicados e arquivos obrigatórios ausentes retornam código 1 com erro em stderr; vínculos incompletos produzem issues e resultados parciais com código 0.
 

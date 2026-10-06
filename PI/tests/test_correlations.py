@@ -26,6 +26,9 @@ def test_c1_privileged_and_writable_requires_review(mode, owner):
     assert result[0].disposition == "needs_review"
     assert result[0].entities["permissions"] == ["/opt/demo", "/opt"]
     assert any("owner_uid=" in e and "mode=" in e for e in result[0].evidence)
+    assert f"/opt/demo (modo {mode:04o}, owner_uid={owner})" in result[0].interpretation
+    assert "Se o recurso puder ser alterado" in result[0].hypothesis
+    assert "Alteração e exploração não foram demonstradas" in result[0].hypothesis
 
 
 def test_root_and_safe_permissions_do_not_trigger_c1():
@@ -63,13 +66,34 @@ def test_c1_inconclusive(change):
         snapshot.services[0].active_state = None
     else:
         snapshot.permissions[0].exists = False
-    assert findings(snapshot, "C1")[0].disposition == "inconclusive"
+    result = findings(snapshot, "C1")[0]
+    assert result.disposition == "inconclusive"
+    assert "relação de escrita/privilégio não pôde ser avaliada" in result.interpretation
+    assert "evidências faltantes" in result.hypothesis
+    assert "código modificado pode executar" not in result.hypothesis
+
+
+@pytest.mark.parametrize("change,gap", [("uid", "UID efetivo"), ("state", "Estado ativo")])
+def test_c1_writable_without_privileged_context_stays_inconclusive(change, gap):
+    snapshot = sample(0o777)
+    if change == "uid":
+        snapshot.processes[1].uid = None
+    else:
+        snapshot.services[0].active_state = None
+    result = findings(snapshot, "C1")[0]
+    assert result.disposition == "inconclusive"
+    assert gap in result.interpretation
+    assert "sem confirmação do contexto privilegiado" in result.interpretation
+    assert "modo 0777" in result.interpretation
+    assert "evidências faltantes" in result.hypothesis
 
 
 def test_c1_parent_replacement_and_sticky():
     snapshot = sample()
     snapshot.permissions[1].mode = 0o777
-    assert findings(snapshot, "C1")[0].disposition == "needs_review"
+    result = findings(snapshot, "C1")[0]
+    assert result.disposition == "needs_review"
+    assert "pai /opt (modo 0777, owner_uid=0)" in result.interpretation
     snapshot.permissions[1].mode = 0o1777
     assert findings(snapshot, "C1") == []
 

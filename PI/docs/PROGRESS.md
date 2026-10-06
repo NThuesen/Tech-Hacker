@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: B9`
+`CURRENT_BLOCK: NONE`
 
-Status geral: **B0-B8 concluídos e validados; B9 aprovado e ainda não iniciado para tornar a diferença entre `inconclusive` e `needs_review` clara no output, sem alterar a lógica de correlação ou o schema v1**.
+Status geral: **B0-B9 concluídos e validados; escopo aprovado concluído. B9 explicita a diferença entre `inconclusive` e `needs_review`, sem alterar critérios de correlação ou schema v1. Nenhuma próxima extensão aprovada**.
 
 ## Regras de atualização
 
@@ -30,7 +30,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
 | B7 | DONE | C2 direta/descendente com proveniência e cadeia PPID, travessia segura e demo de filho; suíte com 139 testes passa |
 | B8 | DONE | Importador offline e analyze-dataset; generator preservado, núcleo/schema inalterados; suíte com 174 testes passa |
-| B9 | READY | Clareza semântica do reporting: diferenciar inconclusive de needs_review, explicar dispositions e reduzir ambiguidade dos IDs no texto sem mudar JSON/C1 |
+| B9 | DONE | Redação C1 por disposition, legenda e identificação textual explícita; critérios/schema/IDs preservados; suíte com 176 testes passa |
 
 ## Formato do resumo de conclusão
 
@@ -130,3 +130,10 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Limitações/pendências: implementar reporting/correlação textual e testes do caso seed 5, depois atualizar docs do comportamento real.
 - Próximo bloco: B9.
 
+### 2026-10-06 — B9 concluído
+
+- Entregue: C1 inconclusivo identifica lacunas sem hipótese positiva; needs_review identifica recurso/modo/owner e impacto condicional, sem prova de alteração/exploração; texto com legenda e ID/correlação/entidade/disposition separados; README, ARCHITECTURE e DEMO alinhados.
+- Validação: 176 testes passam em Python 3.13.12; generator real seeds 5/1/2, casos de UID/estado ausente e substituição pelo pai; comando canônico seed 5 em texto/JSON mantém 3 informational, 1 needs_review e 2 inconclusive; comparação antes/depois preserva snapshot, campos, IDs, dispositions, evidências e conjunto de lacunas, com C2/C3 idênticos; import/--help e git diff --check válidos.
+- Decisões: dispositions indicam estado da investigação, não severidade; somente redação C1 e apresentação ajustadas, sem mudança de critérios de detecção, collectors, importador, dependências ou schema v1.
+- Limitações/pendências: nenhuma pendência do bloco; limites POSIX, vínculo MainPID inferido e ausência de prova de exploração permanecem explícitos; apresentação acadêmica continua com o grupo.
+- Próximo bloco: NONE — nenhum próximo bloco aprovado; nenhuma extensão adicional iniciada.

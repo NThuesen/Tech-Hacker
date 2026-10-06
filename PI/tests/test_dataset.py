@@ -19,7 +19,7 @@ from endpoint_investigator import cli, scan, system
 from endpoint_investigator.collectors import network, permissions, processes, services
 from endpoint_investigator.correlations import analyze_snapshot
 from endpoint_investigator.dataset import import_dataset, parse_dataset
-from endpoint_investigator.models import Snapshot
+from endpoint_investigator.models import Finding, Snapshot
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,6 +152,19 @@ def test_real_generator_end_to_end(tmp_path, seed, expected):
         assert all("/opt/reports/report.sh" not in f.entities.get("permissions", []) for f in findings)
     assert sum(f.disposition == "needs_review" for f in findings) == (seed == 5)
     assert not any(f.correlation == "C2" for f in findings)
+    if seed == 5:
+        cron = next(f for f in findings if f.correlation == "C1" and f.entities["services"] == ["cron.service"])
+        assert cron.id == "C1:1" and cron.disposition == "inconclusive"
+        assert "relação de escrita/privilégio não pôde ser avaliada" in cron.interpretation
+        assert "Permissões não observadas: /usr/sbin/cron" in cron.interpretation
+        assert "evidências faltantes" in cron.hypothesis
+        assert "código modificado pode executar" not in cron.hypothesis
+        assert backup[0].id == "C1:2"
+        assert "/opt/backup/backup.sh (modo 0777, owner_uid=0)" in backup[0].interpretation
+        assert "Se o recurso puder ser alterado" in backup[0].hypothesis
+        assert "código modificado pode executar com privilégios elevados" in backup[0].hypothesis
+        assert "Alteração e exploração não foram demonstradas" in backup[0].hypothesis
+        assert cron.hypothesis != backup[0].hypothesis
     for fmt in ("text", "json"):
         result = subprocess.run([sys.executable, "-m", "endpoint_investigator", "analyze-dataset",
                                  str(tmp_path), "--format", fmt], capture_output=True, text=True, timeout=15)
@@ -160,9 +173,28 @@ def test_real_generator_end_to_end(tmp_path, seed, expected):
             report = json.loads(result.stdout)
             assert report["snapshot"] == snapshot.to_dict()
             assert report["findings"] == [f.to_dict() for f in findings]
+            assert report["report_version"] == report["snapshot"]["schema_version"] == 1
+            for item in report["findings"]:
+                assert set(item) == {"id", "title", "correlation", "entities", "evidence",
+                                     "interpretation", "hypothesis", "missing_evidence", "disposition"}
+                assert Finding.from_dict(item).to_dict() == item
+            if seed == 5:
+                assert report["summary"]["findings"] == {"informational": 3, "needs_review": 1, "inconclusive": 2}
+                assert [(f["id"], f["disposition"]) for f in report["findings"]] == [
+                    ("C1:0", "inconclusive"), ("C1:1", "inconclusive"), ("C1:2", "needs_review"),
+                    ("C3:612", "informational"), ("C3:821", "informational"), ("C3:2417", "informational"),
+                ]
         else:
             for label in ("Evidência:", "Interpretação:", "Hipótese:", "Evidência ausente:"):
                 assert label in result.stdout
+            if seed == 5:
+                assert "Dispositions são estados da investigação/evidência, não níveis de risco" in result.stdout
+                for finding in (cron, backup[0]):
+                    assert (f"ID técnico: {finding.id}\nCorrelação: C1\n"
+                            f"Entidade principal: services={finding.entities['services'][0]}\n"
+                            f"Disposition: {finding.disposition}") in result.stdout
+                    assert "Interpretação: " + finding.interpretation in result.stdout
+                    assert "Hipótese: " + finding.hypothesis in result.stdout
     assert before == {p.name: p.read_bytes() for p in tmp_path.iterdir()}
 
 

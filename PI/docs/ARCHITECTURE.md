@@ -235,9 +235,9 @@ As dispositions descrevem **o estado da investigação e a força da evidência 
 - `inconclusive`: faltam dados necessários para avaliar a relação investigada;
 - `needs_review`: existe evidência concreta de uma relação potencialmente insegura que merece revisão, sem provar exploração.
 
-A apresentação deve refletir essa diferença. Em particular, um C1 `inconclusive` por permissões ausentes não deve usar a mesma hipótese de um C1 `needs_review` sustentado por um recurso gravável. O primeiro deve explicar por que a relação não pôde ser avaliada; o segundo pode descrever condicionalmente o risco suportado pelos fatos e deve declarar que alteração/exploração não foram demonstradas.
+A apresentação implementada em B9 reflete essa diferença. C1 `inconclusive` explica por que a relação escrita/privilégio não pôde ser avaliada, identifica lacunas de estado/UID/recurso/permissões e pede evidências antes de formular a hipótese. Sinais de escrita eventualmente observados permanecem explícitos, sem confirmar contexto privilegiado ausente. C1 `needs_review` identifica o recurso, modo e owner UID (ou os do pai quando há substituição) que sustentam a revisão; a hipótese condiciona o impacto à alteração e posterior execução pelo serviço privilegiado, declarando que alteração/exploração não foram demonstradas. Os critérios de detecção e todas as evidências e lacunas permanecem preservados.
 
-Os IDs `C1:n`, `C2:n` e `C3:pid` continuam sendo identificadores técnicos reproduzíveis para o snapshot, não níveis de risco. O relatório textual deve deixar ID, correlação, entidade principal e disposition visualmente distintos, sem alterar os IDs do contrato JSON v1.
+Os IDs `C1:n`, `C2:n` e `C3:pid` continuam sendo identificadores técnicos reproduzíveis para o snapshot, não níveis de risco. O relatório textual inclui uma legenda das três dispositions e separa ID técnico, correlação, entidade principal e disposition em linhas próprias. A entidade principal é o serviço em C1, o socket em C2 e o processo em C3; as demais entidades continuam apresentadas. Campos, IDs e dispositions do contrato JSON v1 não mudaram; somente a redação interpretativa de C1 foi ajustada.
 
 
 ### Contrato JSON v1 (B0)
@@ -569,9 +569,9 @@ Esses itens adicionam complexidade sem necessidade para atingir a rubrica. B7 li
 
 ## 16. Critério para extensões
 
-B7 foi implementado para melhorar diretamente C2. B8 foi concluído como a última extensão aprovada: integra o dataset generator fornecido pela disciplina como uma fonte offline adicional, sem nova dependência, collector live ou schema.
+B7 foi implementado para melhorar diretamente C2. B8 integra o dataset generator fornecido pela disciplina como uma fonte offline adicional, sem nova dependência, collector live ou schema. B9 foi concluído como a última extensão aprovada: melhora a semântica da redação de C1 e a apresentação textual, preservando detecção, fontes, dependências e schema.
 
-Depois de B8, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
+Depois de B9, nenhuma extensão adicional deve ser iniciada sem solicitação explícita. Para qualquer proposta futura:
 
 1. um requisito obrigatório deve continuar estável;
 2. a mudança deve melhorar diretamente uma correlação, explicabilidade ou demonstração;

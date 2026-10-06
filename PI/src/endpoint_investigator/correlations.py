@@ -74,25 +74,26 @@ def analyze_snapshot(snapshot: Snapshot) -> list[Finding]:
             continue
         evidence = [f"services[{service.unit!r}]: active_state={service.active_state!r}, MainPID={service.main_pid}."]
         gaps = [TEMPORAL_GAP, "Não há prova de alteração ou exploração; verificar logs e integridade histórica."]
+        blockers = []
         confirmed = service.active_state == "active" and process is not None and process.uid == 0
         if service.active_state is None:
-            gaps.append("Estado ativo do serviço não observado.")
+            blockers.append("Estado ativo do serviço não observado.")
         if process is None or process.uid is None:
-            gaps.append("Processo/UID efetivo do MainPID não observado; configuração User não confirma privilégio efetivo.")
+            blockers.append("Processo/UID efetivo do MainPID não observado; configuração User não confirma privilégio efetivo.")
         if process is not None:
             evidence.append(f"processes[{process.pid}]: uid={process.uid}, exe={process.exe!r}.")
         paths, path_issues = select_paths([process] if process else [], [service])
         uncertain = not paths or bool(path_issues)
         if not paths:
-            gaps.append("Nenhum recurso do serviço pôde ser resolvido.")
-        gaps.extend(f"Seleção {issue.code}: {issue.message}" for issue in path_issues)
+            blockers.append("Nenhum recurso do serviço pôde ser resolvido.")
+        blockers.extend(f"Seleção {issue.code}: {issue.message}" for issue in path_issues)
         modifiable = []
         observed_paths = []
         for path in paths:
             record = permissions.get(path)
             if record is None:
                 uncertain = True
-                gaps.append(f"Permissões não observadas: {path}.")
+                blockers.append(f"Permissões não observadas: {path}.")
                 continue
             observed_paths.append(path)
             evidence.append(_permission_evidence(record))
@@ -103,14 +104,27 @@ def analyze_snapshot(snapshot: Snapshot) -> list[Finding]:
             assessment = assess_permissions(record, parent)
             gaps.extend(assessment.missing_evidence)
             if assessment.direct_write is True:
-                modifiable.append(f"{path}: bits sugerem escrita direta por não-root")
+                modifiable.append(f"{path} (modo {record.mode:04o}, owner_uid={record.owner_uid}): bits sugerem escrita direta por não-root")
             if assessment.replacement is True:
-                modifiable.append(f"{path}: bits do pai sugerem substituição por não-root")
+                modifiable.append(f"{path}: bits do pai {parent.path} (modo {parent.mode:04o}, owner_uid={parent.owner_uid}) sugerem substituição por não-root")
             if assessment.direct_write is None or assessment.replacement is None:
                 uncertain = True
-                gaps.append(f"Escrita/substituição não determinada integralmente: {path}.")
+                blockers.append(f"Escrita/substituição não determinada integralmente: {path}.")
         if not modifiable and not uncertain and confirmed:
             continue
+        disposition = "needs_review" if confirmed and modifiable else "inconclusive"
+        if disposition == "needs_review":
+            interpretation = "Revisão sustentada por serviço ativo com UID efetivo 0 e pelos seguintes sinais POSIX: " + "; ".join(modifiable) + "."
+            hypothesis = ("Se o recurso puder ser alterado por uma identidade não-root e depois executado pelo serviço privilegiado "
+                          "(inclusive após reinício ou substituição), código modificado pode executar com privilégios elevados. "
+                          "Alteração e exploração não foram demonstradas.")
+        else:
+            interpretation = "A relação de escrita/privilégio não pôde ser avaliada: " + " ".join(blockers)
+            if modifiable:
+                interpretation += " Sinais POSIX observados, sem confirmação do contexto privilegiado: " + "; ".join(modifiable) + "."
+            hypothesis = ("Não é possível formular uma hipótese de relação de privilégio insegura com os dados disponíveis; "
+                          "é necessário obter as evidências faltantes antes de avaliar essa possibilidade.")
+        gaps.extend(blockers)
         entities = {"services": [service.unit], "processes": [str(process.pid)] if process else [],
                     "permissions": list(dict.fromkeys(observed_paths))}
         gaps.extend(_issues(snapshot, {"processes", "services", "permissions"},
@@ -118,9 +132,8 @@ def analyze_snapshot(snapshot: Snapshot) -> list[Finding]:
         findings.append(Finding(
             id=f"C1:{index}", title="Contexto de privilégio e recursos do serviço", correlation="C1",
             entities=entities, evidence=list(dict.fromkeys(evidence)),
-            interpretation=("; ".join(modifiable) + "." if modifiable else "Dados insuficientes para determinar a relação de escrita/privilégio."),
-            hypothesis="Pode existir uma relação de privilégio insegura após alteração do recurso ou reinício; exploração não demonstrada.",
-            missing_evidence=list(dict.fromkeys(gaps)), disposition="needs_review" if confirmed and modifiable else "inconclusive",
+            interpretation=interpretation, hypothesis=hypothesis,
+            missing_evidence=list(dict.fromkeys(gaps)), disposition=disposition,
         ))
 
     for index, listener in enumerate(snapshot.sockets):

@@ -90,6 +90,15 @@ Os testes demonstram comportamento do software; a apresentação e a avaliação
 
 Mostre backup-agent.service, MainPID 2417 inferido por igualdade textual única entre ExecStart e cmd, usuário root e `/opt/backup/backup.sh` 0777 com pai 0755. Resultado: um C1 needs_review para backup, dois C1 inconclusive para ssh/cron sem permissões e três C3 informational. Explique a hipótese de alteração do script, sem afirmar exploração. A proveniência do MainPID aparece como limitação: não veio de systemd. Não há C2 porque não há sockets nessa fonte; curl ou eventos do journal não provam escuta.
 
+Leia a legenda: dispositions são estados da investigação/evidência, não níveis de risco. `informational` oferece contexto sem afirmar vulnerabilidade, `inconclusive` indica evidências necessárias ausentes e `needs_review` pede revisão sustentada por evidência concreta, sem provar comprometimento. Mostre os campos separados de ID técnico, correlação, entidade principal e disposition; `C1:1` e `C1:2` não são níveis.
+
+Compare os dois C1:
+
+- `C1:1`, `cron.service`, `inconclusive`: a relação escrita/privilégio não pôde ser avaliada; faltam permissões de `/usr/sbin/cron`. A hipótese pede evidências faltantes, sem tratar a condição insegura como observada.
+- `C1:2`, `backup-agent.service`, `needs_review`: `/opt/backup/backup.sh` com modo `0777` e owner UID 0 sustenta a revisão junto ao serviço ativo e UID efetivo 0. Se uma identidade não-root puder alterar o recurso e o serviço privilegiado depois executá-lo, código modificado pode executar com privilégios elevados. Alteração e exploração não foram demonstradas.
+
+O total continua 3 `informational`, 1 `needs_review` e 2 `inconclusive`. Mostre as quatro camadas e as lacunas preservadas, inclusive limites POSIX e vínculo MainPID inferido. A melhoria B9 modifica a redação e o texto do relatório; os critérios de detecção, campos JSON v1, IDs e dispositions continuam os mesmos.
+
 Contraprovas reproduzíveis:
 
 ```bash
