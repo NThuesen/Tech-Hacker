@@ -4,7 +4,7 @@ PI de Tecnologias Hackers — ferramenta local de investigação de segurança p
 
 ## Status
 
-**B0–B8 concluídos: coleta live, snapshots JSON e integração offline com o dataset do professor. Nenhum novo bloco aprovado.**
+**B0–B8 concluídos: coleta live, snapshots JSON e integração offline com o dataset do professor. B9 aprovado e ainda não iniciado: clareza semântica dos findings e do relatório textual.**
 
 O projeto foi deliberadamente desenhado para ser pequeno: snapshot sob demanda, coletores read-only, três correlações explicáveis e saída texto/JSON. Não há banco, servidor web, daemon ou LLM no núcleo.
 
