@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-`CURRENT_BLOCK: NONE`
+`CURRENT_BLOCK: B9`
 
-Status geral: **B0-B8 concluídos e validados; integração offline com o dataset do professor disponível. Nenhum próximo bloco aprovado**.
+Status geral: **B0-B8 concluídos e validados; B9 aprovado e ainda não iniciado para tornar a diferença entre `inconclusive` e `needs_review` clara no output, sem alterar a lógica de correlação ou o schema v1**.
 
 ## Regras de atualização
 
@@ -30,6 +30,7 @@ Não transforme este arquivo em diário detalhado. O objetivo é permitir handof
 | B6 | DONE | Quatro cenários integrados, README, roteiro e base técnica; 124 testes passam |
 | B7 | DONE | C2 direta/descendente com proveniência e cadeia PPID, travessia segura e demo de filho; suíte com 139 testes passa |
 | B8 | DONE | Importador offline e analyze-dataset; generator preservado, núcleo/schema inalterados; suíte com 174 testes passa |
+| B9 | READY | Clareza semântica do reporting: diferenciar inconclusive de needs_review, explicar dispositions e reduzir ambiguidade dos IDs no texto sem mudar JSON/C1 |
 
 ## Formato do resumo de conclusão
 
@@ -120,3 +121,12 @@ Se uma decisão alterar a arquitetura, atualize `ARCHITECTURE.md` no mesmo bloco
 - Decisões: somente root literal recebe ID 0; MainPID por igualdade textual única com aviso; pais somente do CSV; falhas estruturais retornam 1, lacunas preservam resultado parcial; generator, fixtures, C1/C2/C3, schema e dependências preservados.
 - Limitações/pendências: sem sockets/logs ou cronologia; generated_at varia e não representa coleta; permissões ausentes mantêm inconclusivos; documento técnico final atualizado com B8 e validado em quatro páginas; apresentação continua com o grupo.
 - Próximo bloco: NONE — nenhuma nova extensão iniciada.
+
+### 2026-10-06 — B9 aprovado
+
+- Entregue: demanda registrada em IMPLEMENTATION_PLAN/ARCHITECTURE/AGENTS; nenhuma alteração de código iniciada.
+- Validação: não aplicável nesta etapa de handoff; comportamento atual permanece B8.
+- Decisões: dispositions são estados da investigação, não severidade; C1 inconclusive e needs_review devem ter linguagem distinta; sem score, nova disposition, mudança de schema ou mudança da lógica C1.
+- Limitações/pendências: implementar reporting/correlação textual e testes do caso seed 5, depois atualizar docs do comportamento real.
+- Próximo bloco: B9.
+
