@@ -49,6 +49,7 @@ Esse registro deve ser curto: o objetivo é permitir que outra sessão do Codex 
 - Permissões devem ser analisadas no contexto dos recursos usados por processos/serviços; evite varrer o filesystem inteiro sem justificativa.
 - O resultado deve separar, sempre que aplicável: **evidência**, **interpretação**, **hipótese** e **evidência ausente**.
 - Quando não houver evidência suficiente, o resultado deve permanecer inconclusivo.
+- `informational`, `inconclusive` e `needs_review` representam **estado da investigação/evidência**, não grau de risco ou severidade.
 - Se houver LLM/IA, a IA nunca pode substituir a coleta, normalização ou correlação próprias da ferramenta.
 - A execução principal deve ser um snapshot sob demanda; não transforme o projeto em agente permanente sem pedido explícito.
 - Testes ativos devem ficar em ambientes locais/controlados e autorizados, especialmente a VM Kali e os datasets do projeto.
@@ -162,7 +163,7 @@ Durante B8, o generator fornecido pelo professor deve ser tratado como artefato 
 
 - Faça o menor patch correto para o bloco atual.
 - Não misture refactors oportunistas.
-- B7 foi concluído. B8 está aprovado somente para integrar o `tools/generate_dataset.py` fornecido pela disciplina como fonte offline adicional; não transforme o bloco em análise genérica de logs ou nova família de correlações.
+- B7 e B8 foram concluídos. B9 está aprovado somente para melhorar a clareza semântica e a apresentação dos findings, principalmente a diferença entre `inconclusive` e `needs_review`; não altere a lógica de detecção C1/C2/C3, o schema JSON v1 nem adicione score/severidade de risco.
 - Não adicione feature apenas por parecer interessante.
 - Para mudança arquitetural, explique o ganho e atualize `ARCHITECTURE.md`.
 - Para mudança de escopo acadêmico, não altere o brief silenciosamente; sinalize a divergência.
