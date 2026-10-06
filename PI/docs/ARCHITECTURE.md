@@ -227,6 +227,19 @@ Todo finding usa a mesma forma:
 
 Evite uma escala numérica artificial de risco. O objetivo é investigação, não scoring.
 
+### Semântica das dispositions (B9)
+
+As dispositions descrevem **o estado da investigação e a força da evidência disponível**, não a severidade do possível impacto:
+
+- `informational`: contexto observável útil, sem inferência de vulnerabilidade;
+- `inconclusive`: faltam dados necessários para avaliar a relação investigada;
+- `needs_review`: existe evidência concreta de uma relação potencialmente insegura que merece revisão, sem provar exploração.
+
+A apresentação deve refletir essa diferença. Em particular, um C1 `inconclusive` por permissões ausentes não deve usar a mesma hipótese de um C1 `needs_review` sustentado por um recurso gravável. O primeiro deve explicar por que a relação não pôde ser avaliada; o segundo pode descrever condicionalmente o risco suportado pelos fatos e deve declarar que alteração/exploração não foram demonstradas.
+
+Os IDs `C1:n`, `C2:n` e `C3:pid` continuam sendo identificadores técnicos reproduzíveis para o snapshot, não níveis de risco. O relatório textual deve deixar ID, correlação, entidade principal e disposition visualmente distintos, sem alterar os IDs do contrato JSON v1.
+
+
 ### Contrato JSON v1 (B0)
 
 Os modelos são dataclasses em `models.py`, com conversão por `to_dict`/`from_dict` e `to_json`/`from_json`. A leitura reconstrói os tipos dos registros e rejeita campos desconhecidos, tipos incompatíveis e versões não suportadas com `ValueError`; a escrita também valida os tipos. Essa validação é estrutural, não uma verificação da veracidade das evidências ou da validade semântica de cada PID, porta ou data.
