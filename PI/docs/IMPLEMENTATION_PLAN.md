@@ -303,3 +303,80 @@ Usar diretamente o `tools/generate_dataset.py` fornecido pelo professor como fon
 - suíte completa passa;
 - README, ARCHITECTURE, DEMO, TECHNICAL_REPORT e PROGRESS são atualizados;
 - após concluir, definir `CURRENT_BLOCK: NONE` e não iniciar nova extensão.
+
+## B9 — Clareza semântica dos findings e do relatório textual
+
+### Objetivo
+
+Tornar a diferença entre `inconclusive` e `needs_review` imediatamente compreensível para quem lê a saída pela primeira vez, especialmente em C1, sem alterar a lógica de correlação nem transformar disposition em score de risco.
+
+O problema observado no dataset `intermediate --seed 5` é que um serviço root sem permissões observadas (`cron.service`) e um serviço root ligado a recurso 0777 (`backup-agent.service`) recebem a mesma redação de hipótese, embora a força da evidência seja diferente. A saída deve comunicar essa diferença explicitamente.
+
+### Semântica obrigatória das dispositions
+
+- `informational`: há contexto observável útil, mas o finding não afirma vulnerabilidade.
+- `inconclusive`: faltam evidências necessárias para avaliar a relação investigada; não deve soar como se a condição insegura já tivesse sido observada.
+- `needs_review`: existe evidência concreta que sustenta uma relação potencialmente insegura e merece revisão humana; isso não prova alteração, exploração ou comprometimento.
+
+Essas dispositions são **estado da investigação/evidência**, não severidade (`low/high/critical`) e não score numérico de risco.
+
+### Escopo
+
+- manter as dispositions existentes e tornar sua semântica explícita no texto;
+- revisar a redação de C1 de acordo com a disposition;
+- em C1 `inconclusive`:
+  - explicar que a relação escrita/privilégio **não pôde ser avaliada**;
+  - apontar a evidência faltante que bloqueia a conclusão, por exemplo permissões do recurso;
+  - não reutilizar a mesma hipótese positiva usada por um finding `needs_review`;
+- em C1 `needs_review`:
+  - apontar qual recurso e qual fato observado sustentam a revisão, por exemplo `/opt/backup/backup.sh` com modo `0777`;
+  - descrever o impacto apenas de forma condicional: se o recurso puder ser alterado e depois executado pelo serviço privilegiado, código modificado pode executar com privilégios elevados;
+  - manter explícito que alteração/exploração não foram demonstradas;
+- adicionar ao relatório textual uma legenda curta explicando `informational`, `inconclusive` e `needs_review`;
+- tornar o cabeçalho textual menos ambíguo: `C1:1`/`C1:2` são identificadores técnicos, não níveis. O texto deve separar claramente **ID**, **regra/correlação**, **entidade principal** e **disposition**;
+- preservar `evidence`, `interpretation`, `hypothesis` e `missing_evidence` como camadas distintas;
+- atualizar testes e documentação afetada.
+
+### Guardrails
+
+- não alterar os critérios que fazem C1 resultar em `needs_review` ou `inconclusive`;
+- não adicionar `severity`, `risk_score`, `confidence` ou novas dispositions;
+- não alterar o schema JSON v1;
+- não alterar collectors, importador do dataset ou fontes de dados;
+- não mudar IDs persistidos no JSON apenas por estética; se a apresentação textual for melhorada, preservar o identificador técnico existente;
+- não remover limitações ou evidências ausentes para deixar a saída artificialmente mais simples.
+
+### Caso de referência obrigatório
+
+Com:
+
+```bash
+.venv/bin/python tools/generate_dataset.py \
+  --level intermediate \
+  --seed 5 \
+  --output training-generated/professor-correlation
+
+.venv/bin/python -m endpoint_investigator analyze-dataset \
+  training-generated/professor-correlation
+```
+
+a lógica deve continuar produzindo as mesmas dispositions gerais do cenário atual, inclusive:
+
+- `cron.service`: C1 `inconclusive`, pois há serviço/processo privilegiado observado, mas não há permissões suficientes para avaliar a relação escrita/privilégio;
+- `backup-agent.service`: C1 `needs_review`, pois o snapshot contém evidência do script `/opt/backup/backup.sh` com modo `0777` associado ao serviço privilegiado.
+
+A redação dos dois findings deve ser claramente diferente e coerente com essas evidências.
+
+### Aceite
+
+- o cenário seed 5 mantém a classificação atual: 3 `informational`, 1 `needs_review` e 2 `inconclusive`;
+- o C1 de `cron.service` explica que faltam permissões e não repete a hipótese de relação insegura como se houvesse evidência positiva;
+- o C1 de `backup-agent.service` identifica o recurso 0777 como razão concreta para `needs_review` e mantém a exploração como não demonstrada;
+- o relatório textual explica que dispositions não são níveis de risco;
+- o cabeçalho/identificação textual não induz o leitor a interpretar `C1:1` ou `C1:2` como severidade;
+- JSON continua compatível com v1, com os mesmos campos, IDs e dispositions;
+- testes cobrem explicitamente a diferença de linguagem/semântica entre os dois C1 do caso de referência;
+- README, ARCHITECTURE e DEMO são atualizados somente para o comportamento efetivamente implementado;
+- suíte completa passa;
+- ao concluir B9, registrar o resumo em `PROGRESS.md`, definir `CURRENT_BLOCK: NONE` e parar.
+
